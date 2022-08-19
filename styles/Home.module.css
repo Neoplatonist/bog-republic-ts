@@ -1,9 +1,31 @@
 .container {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
   padding: 0 2rem;
 }
 
+.header {
+  display: flex;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+.header a {
+  border: 2px solid #000;
+  border-radius: 4px;
+  margin-right: 1rem;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  color: #000;
+}
+
+.header a:hover {
+  background: #000;
+  color: #fff;
+}
+
 .main {
-  min-height: 100vh;
   padding: 4rem 0;
   flex: 1;
   display: flex;
@@ -14,7 +36,6 @@
 
 .footer {
   display: flex;
-  flex: 1;
   padding: 2rem 0;
   border-top: 1px solid #eaeaea;
   justify-content: center;
