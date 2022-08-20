@@ -28,7 +28,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Production
 
-[How to deplooy](https://nextjs.org/docs/deployment)
+[How to deploy](https://nextjs.org/docs/deployment)
 
 ## Contributions
 
