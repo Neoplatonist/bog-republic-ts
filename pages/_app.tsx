@@ -1,9 +1,24 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
+import { NextPageWithAuth } from '@/libs/types';
+import AuthGuard from '@/libs/firebase/components/AuthGuard';
 import '../styles/globals.css';
-import type { AppProps } from 'next/app';
 
-function MyApp({ Component, pageProps }: AppProps) {
-  // eslint-disable-next-line react/jsx-props-no-spreading
+function MyApp({
+  Component,
+  pageProps
+}: {
+  Component: NextPageWithAuth;
+  pageProps: any;
+}) {
+  if (Component.requireAuth) {
+    return (
+      <AuthGuard>
+        <Component {...pageProps} />
+      </AuthGuard>
+    );
+  }
+
   return <Component {...pageProps} />;
 }
 
