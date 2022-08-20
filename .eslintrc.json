@@ -1,4 +1,7 @@
 {
+  "globals": {
+    "JSX": "readonly"
+  },
   "extends": [
     "next/core-web-vitals",
     "eslint:recommended",
@@ -24,6 +27,7 @@
         "specialLink": ["hrefLeft", "hrefRight"],
         "aspects": ["invalidHref", "preferButton"]
       }
-    ]
+    ],
+    "import/extensions": ["error", { "ignorePackages": true }]
   }
 }
