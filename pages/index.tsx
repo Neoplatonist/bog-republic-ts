@@ -1,5 +1,5 @@
 import React from 'react';
-import type { NextPage } from 'next';
+import { NextPage } from 'next/types';
 import Head from 'next/head';
 import Link from 'next/link';
 import styles from '@/styles/Home.module.css';
