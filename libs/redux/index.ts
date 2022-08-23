@@ -8,13 +8,18 @@ import {
 import type { Store } from '@reduxjs/toolkit';
 import { Context, createWrapper } from 'next-redux-wrapper';
 
+// import reducers
+import testReducer from './test';
+
 const isDev = process.env.NODE_ENV === 'development';
 
 export const createStore: () => Store = (
   options?: ConfigureStoreOptions['preloadedState'] | undefined
 ) =>
   configureStore({
-    reducer: {},
+    reducer: {
+      [testReducer.name]: testReducer.reducer,
+    },
     middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(),
     devTools: isDev,
     ...options,
