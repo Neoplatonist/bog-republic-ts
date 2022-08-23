@@ -9,6 +9,7 @@ import type { Store } from '@reduxjs/toolkit';
 import { Context, createWrapper } from 'next-redux-wrapper';
 
 // import reducers
+import api from './api';
 import testReducer from './test';
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -18,9 +19,11 @@ export const createStore: () => Store = (
 ) =>
   configureStore({
     reducer: {
+      [api.reducerPath]: api.reducer,
       [testReducer.name]: testReducer.reducer,
     },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(),
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(api.middleware),
     devTools: isDev,
     ...options,
   });
