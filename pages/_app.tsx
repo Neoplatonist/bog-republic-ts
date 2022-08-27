@@ -2,6 +2,7 @@
 import React from 'react';
 import { NextPageWithAuth } from '@/libs/types';
 import AuthGuard from '@/libs/firebase/components/AuthGuard';
+import { storeWithWrapper } from '@/libs/redux';
 import '../styles/globals.css';
 
 function MyApp({
@@ -22,4 +23,4 @@ function MyApp({
   return <Component {...pageProps} />;
 }
 
-export default MyApp;
+export default storeWithWrapper.withRedux(MyApp);
