@@ -28,7 +28,8 @@ const baseQueryWithRetry = retry(baseQuery, { maxRetries: 3 });
  * in order to get the appropriate types,
  * and to ensure that the file injecting the endpoints is loaded.
  */
-const api = createApi({
+const clientApi = createApi({
+  reducerPath: 'clientApi',
   baseQuery: baseQueryWithRetry,
   /**
    * Tag types must be defined in the original API definition
@@ -44,4 +45,4 @@ const api = createApi({
   endpoints: () => ({}),
 });
 
-export default api;
+export default clientApi;

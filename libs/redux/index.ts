@@ -5,39 +5,41 @@ import {
   ConfigureStoreOptions,
   ThunkDispatch,
 } from '@reduxjs/toolkit';
-import type { Store } from '@reduxjs/toolkit';
 import { Context, createWrapper } from 'next-redux-wrapper';
 
 // import reducers
-import api from './api';
 import testReducer from './test';
+import clientApi from './clientApi';
 
 const isDev = process.env.NODE_ENV === 'development';
 
-export const createStore: () => Store = (
+export const createStore: any = (
   options?: ConfigureStoreOptions['preloadedState'] | undefined
 ) =>
   configureStore({
     reducer: {
-      [api.reducerPath]: api.reducer,
+      // Reducers
       [testReducer.name]: testReducer.reducer,
+
+      // Query and Mutations
+      [clientApi.reducerPath]: clientApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(api.middleware),
+      getDefaultMiddleware().concat(clientApi.middleware),
     devTools: isDev,
     ...options,
   });
 
 // create store to make the
 // dispatch, thunk dispatch, and useSelector types avaliable
-const store = createStore();
+export const store = createStore();
 
-// create a makeStore function for next-redux-wrapper
+// Created a makeStore function for next-redux-wrapper
 // eslint-disable-next-line no-unused-vars
 export const makeStore = (context: Context) => store;
 
 // assembled next-redux-wrapper
-export const wrapper = createWrapper(makeStore, {
+export const storeWithWrapper = createWrapper(makeStore, {
   debug: isDev,
 });
 
