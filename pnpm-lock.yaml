@@ -28,6 +28,7 @@ specifiers:
   react-firebase-hooks: ^5.0.3
   react-redux: ^8.0.2
   typescript: 4.7.4
+  zod: ^3.18.0
 
 dependencies:
   '@reduxjs/toolkit': 1.8.5_kkwg4cbsojnjnupd3btipussee
@@ -41,6 +42,7 @@ dependencies:
   react-dom: 18.2.0_react@18.2.0
   react-firebase-hooks: 5.0.3_frctpyha4ihfpwu4ugdngushbq
   react-redux: 8.0.2_76am3hp3mjvgy3cckgdecixdi4
+  zod: 3.18.0
 
 devDependencies:
   '@commitlint/cli': 17.0.3
@@ -2667,6 +2669,7 @@ packages:
       chalk: 2.4.2
       diff-match-patch: 1.0.5
     dev: false
+    bundledDependencies: []
 
   /jsonfile/6.1.0:
     resolution: {integrity: sha512-5dgndWOriYSm5cnYaJNhalLNDKOqFwyDB/rr1E9ZsGciGvKPs8R2xYGCacuf3z6K1YKDz182fd+fY3cn3pMqXQ==}
@@ -3986,3 +3989,7 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
+
+  /zod/3.18.0:
+    resolution: {integrity: sha512-gwTm8RfUCe8l9rDwN5r2A17DkAa8Ez4Yl4yXqc5VqeGaXaJahzYYXbTwvhroZi0SNBqTwh/bKm2N0mpCzuw4bA==}
+    dev: false
