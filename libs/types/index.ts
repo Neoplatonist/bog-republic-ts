@@ -1,1 +1,1 @@
-export * from './NextPageWithAuth';
+export * from './nextPageWithAuth';
