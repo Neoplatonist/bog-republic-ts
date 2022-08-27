@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery, retry } from '@reduxjs/toolkit/query/react';
+import { HYDRATE } from 'next-redux-wrapper';
 
 // Create our baseQuery instance
 const baseQuery = fetchBaseQuery({
@@ -43,6 +44,14 @@ const clientApi = createApi({
    * they could be included here instead.
    */
   endpoints: () => ({}),
+
+  // Rehydrates the api store from the server
+  // eslint-disable-next-line consistent-return
+  extractRehydrationInfo(action, { reducerPath }) {
+    if (action.type === HYDRATE) {
+      return action.payload[reducerPath];
+    }
+  },
 });
 
 export default clientApi;
