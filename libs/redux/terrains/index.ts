@@ -8,14 +8,14 @@ import { TerrainObjectListSchema } from '@/libs/types';
 
 const TerrainStateSchema = z.object({
   data: TerrainObjectListSchema,
-  error: z.array(z.string()).nullable(),
+  errors: z.array(z.string()).nullable(),
 });
 
 export type TerrainState = z.infer<typeof TerrainStateSchema>;
 
 const initialState = {
   data: [],
-  error: null,
+  errors: null,
 } as TerrainState;
 
 const slice = createSlice({
@@ -23,8 +23,25 @@ const slice = createSlice({
   initialState,
   reducers: {
     setTerrains: (state, { payload }) => {
-      state.data = [...payload];
-      state.error = null;
+      const terrainsData = TerrainObjectListSchema.safeParse(payload);
+
+      if (!terrainsData.success) {
+        state.data = [];
+        state.errors = [
+          ...terrainsData.error.issues.map(
+            (issue) =>
+              `TerrainAPI -> getTerrains typecheck failed -> ${issue.path[0]}: ${issue.message}`
+          ),
+        ];
+      }
+
+      if (terrainsData.success) {
+        state.data = terrainsData.data;
+        state.errors = null;
+      }
+    },
+    setTerrainError: (state, { payload }) => {
+      state.errors = payload;
     },
   },
   extraReducers: {
@@ -51,7 +68,9 @@ const slice = createSlice({
   },
 });
 
-export const { setTerrains } = slice.actions;
-export const selectTest = (state: RootState) => state?.[slice.name].data;
+export const { setTerrains, setTerrainError } = slice.actions;
+export const selectTerrains = (state: RootState) => state?.[slice.name].data;
+export const selectTerrainErrors = (state: RootState): string[] | null =>
+  state?.[slice.name].errors;
 
 export default slice;

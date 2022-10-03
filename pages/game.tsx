@@ -1,24 +1,24 @@
 import React, { MouseEvent } from 'react';
-import { NextPageWithAuth, TerrainObjectList, TerrainObjectListSchema } from '@/libs/types';
+import { NextPageWithAuth } from '@/libs/types';
 import { useRouter } from 'next/router';
 import { getAuth, signOut } from 'firebase/auth';
-import { storeWithWrapper } from '@/libs/redux';
+import {
+  storeWithWrapper,
+  useTypedSelector
+} from '@/libs/redux';
+import {
+  selectTerrainErrors,
+  selectTerrains,
+  setTerrainError,
+  setTerrains
+} from '@/libs/redux/terrains';
 import TerrainsApi from '@/libs/redux/terrains/api';
-import { z } from 'zod';
 import styles from '@/styles/Game.module.css';
 
-const GamePropsSchema = z.object({
-  terrains: TerrainObjectListSchema.nullable(),
-  errors: z.array(z.string()),
-});
-
-type GameProps = z.infer<typeof GamePropsSchema>;
-
-const Game: NextPageWithAuth = ({
-  terrains,
-  errors,
-}: GameProps) => {
+const Game: NextPageWithAuth = () => {
   const router = useRouter();
+  const terrains = useTypedSelector(selectTerrains);
+  const terrainErrors = useTypedSelector(selectTerrainErrors);
 
   // Logs the user out
   const handleLogout = (event: MouseEvent<HTMLButtonElement>) => {
@@ -30,12 +30,12 @@ const Game: NextPageWithAuth = ({
   /**
    * TODO: Add proper error/warning to the UI.
    */
-  if (errors.length) {
+  if (terrainErrors?.length) {
     return (
       <div>
         <h1>Errors</h1>
         <ul>
-          {errors.map((error) => (
+          {terrainErrors?.map((error) => (
             <li key={error}>{error}</li>
           ))}
         </ul>
@@ -70,9 +70,6 @@ const Game: NextPageWithAuth = ({
 // Static Site Generation (SSG) with data fetching
 // Getting the terrains from the backend
 export const getStaticProps = storeWithWrapper.getStaticProps(store => async () => {
-  let errors: string[] = [];
-  let terrainsTyped: TerrainObjectList = [];
-
   // Fetch the data with rtk-query
   await store.dispatch(TerrainsApi.endpoints.getTerrains.initiate(''));
   // Grab the data or error data from the store
@@ -87,32 +84,15 @@ export const getStaticProps = storeWithWrapper.getStaticProps(store => async () 
 
     // Cast the TerrainsApi error to the Error type
     const e = error as Error;
-    errors.push(e.error || 'Error fetching Terrains from server');
+    store.dispatch(setTerrainError(e.error || 'Error fetching Terrains from server'));
   }
 
   if (data && !isError) {
-    const terrainsData = TerrainObjectListSchema.safeParse(data);
-
-    if (!terrainsData.success) {
-      errors = [...errors, ...terrainsData.error.issues.map(
-        (issue) =>
-          `TerrainAPI -> getTerrains typecheck failed -> ${issue.path[0]}: ${issue.message}`
-      )];
-      // errors.forEach((err) => console.error(err));
-    } else {
-      terrainsTyped = terrainsData.data;
-    }
-
-    if (terrainsData.success) {
-      terrainsTyped = terrainsData.data;
-    }
+    store.dispatch(setTerrains(data));
   }
 
   return {
-    props: {
-      terrains: terrainsTyped,
-      errors,
-    }
+    props: {}
   };
 });
 
