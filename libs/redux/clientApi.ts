@@ -3,7 +3,7 @@ import { HYDRATE } from 'next-redux-wrapper';
 
 // Create our baseQuery instance
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'https://jsonplaceholder.typicode.com',
+  baseUrl: process.env.NEXT_PUBLIC_backendAPI || 'http://localhost:3001',
   // eslint-disable-next-line no-unused-vars
   prepareHeaders: (headers, { getState }) => {
     // authentication bearer token goes here
@@ -36,7 +36,7 @@ const clientApi = createApi({
    * Tag types must be defined in the original API definition
    * for any tags that would be provided by injected endpoints
    */
-  tagTypes: ['Test'],
+  tagTypes: ['TerrainsApi'],
   /**
    * This api has endpoints injected from other files,
    * which is why no endpoints are defined here.
