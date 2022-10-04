@@ -41,7 +41,13 @@ const slice = createSlice({
       }
     },
     setTerrainError: (state, { payload }) => {
-      state.errors = payload;
+      if (payload == null) {
+        state.errors = null;
+      } else if (state.errors == null) {
+        state.errors = [payload];
+      } else {
+        state.errors = [...state.errors, payload];
+      }
     },
   },
   extraReducers: {

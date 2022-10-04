@@ -84,6 +84,7 @@ export const getStaticProps = storeWithWrapper.getStaticProps(store => async () 
 
     // Cast the TerrainsApi error to the Error type
     const e = error as Error;
+    store.dispatch(setTerrainError(null)); // clears the error since it's already been handled
     store.dispatch(setTerrainError(e.error || 'Error fetching Terrains from server'));
   }
 
