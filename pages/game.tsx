@@ -31,7 +31,7 @@ const Game: NextPageWithAuth = () => {
   const { mycelium, myceliumNotation } = useTypedSelector(selectUserMycelium);
 
   // Get user data as soon as they log in
-  useGetUserQuery('');
+  const { data: user } = useGetUserQuery('');
 
   /**
    * TODO: Add proper error/warning to the UI.
@@ -79,7 +79,7 @@ const Game: NextPageWithAuth = () => {
     <div>
       {/* User Stats Card */}
       <div className={styles.userStats}>
-        <p>User: Anonymous</p>
+        <p>User: {user && user.username}</p>
 
         <button type='button' onClick={handleLogout}>Logout</button>
       </div>
