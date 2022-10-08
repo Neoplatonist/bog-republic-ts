@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^1.8.5",
-    "axios": "^0.27.2",
     "firebase": "^9.10.0",
     "firebaseui": "^6.0.1",
     "jsondiffpatch": "^0.4.1",
