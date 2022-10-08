@@ -9,6 +9,7 @@ import { Context, createWrapper } from 'next-redux-wrapper';
 
 // import reducers
 import terrainsReducer from './terrains';
+import userReducer from './user';
 import clientApi from './clientApi';
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -20,6 +21,7 @@ export const createStore: any = (
     reducer: {
       // Reducers
       [terrainsReducer.name]: terrainsReducer.reducer,
+      [userReducer.name]: userReducer.reducer,
 
       // Query and Mutations
       [clientApi.reducerPath]: clientApi.reducer,
