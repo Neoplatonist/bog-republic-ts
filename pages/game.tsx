@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { getAuth, signOut } from 'firebase/auth';
 import {
   storeWithWrapper,
+  useAppThunkDispatch,
   useTypedSelector
 } from '@/libs/redux';
 import {
@@ -12,24 +13,25 @@ import {
   setTerrainError,
   setTerrains
 } from '@/libs/redux/terrains';
+import { addToMycelium, subtractFromMycelium, selectUserMycelium } from '@/libs/redux/user';
 import TerrainsApi from '@/libs/redux/terrains/api';
-import styles from '@/styles/Game.module.css';
 import { useGetUserQuery } from '@/libs/redux/user/api';
+import styles from '@/styles/Game.module.css';
 
 const Game: NextPageWithAuth = () => {
+  // NextJS
   const router = useRouter();
+
+  // Selectors
   const terrains = useTypedSelector(selectTerrains);
   const terrainErrors = useTypedSelector(selectTerrainErrors);
 
+  // Dispatch
+  const dispatch = useAppThunkDispatch();
+  const { mycelium, myceliumNotation } = useTypedSelector(selectUserMycelium);
+
   // Get user data as soon as they log in
   useGetUserQuery('');
-
-  // Logs the user out
-  const handleLogout = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    signOut(getAuth())
-      .then(() => router.push('/')); // Redirects to the home page
-  };
 
   /**
    * TODO: Add proper error/warning to the UI.
@@ -47,6 +49,32 @@ const Game: NextPageWithAuth = () => {
     );
   }
 
+  // User Actions -------------------------------------------------------------
+  // Logs the user out
+  const handleLogout = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    signOut(getAuth())
+      .then(() => router.push('/')); // Redirects to the home page
+  };
+
+  // Adds Mycelium to the user's account
+  const handleAddMycelium = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    dispatch(addToMycelium({
+      mycelium: 10,
+      myceliumNotation: 0,
+    }));
+  };
+
+  // Subtracts Mycelium from the user's account
+  const handleSubtractMycelium = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    dispatch(subtractFromMycelium({
+      mycelium: 10,
+      myceliumNotation: 0,
+    }));
+  };
+
   return (
     <div>
       {/* User Stats Card */}
@@ -54,6 +82,12 @@ const Game: NextPageWithAuth = () => {
         <p>User: Anonymous</p>
 
         <button type='button' onClick={handleLogout}>Logout</button>
+      </div>
+
+      <div>
+        <h2>Mycelium: {mycelium} e{myceliumNotation}</h2>
+        <button type="button" onClick={handleAddMycelium}>Add Mycelium</button>
+        <button type="button" onClick={handleSubtractMycelium}>Subtract Mycelium</button>
       </div>
 
       {/* Terrain Cards */}

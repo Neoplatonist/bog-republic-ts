@@ -16,6 +16,13 @@ const UserStateSchema = z.object({
 
 export type UserState = z.infer<typeof UserStateSchema>;
 
+export const MyceliumObjectSchema = z.object({
+  mycelium: z.number(),
+  myceliumNotation: z.number(),
+});
+
+export type MyceliumObject = z.infer<typeof MyceliumObjectSchema>;
+
 const initialState = {
   data: {},
   errors: null,
@@ -24,7 +31,16 @@ const initialState = {
 const slice = createSlice({
   name: 'user',
   initialState,
-  reducers: {},
+  reducers: {
+    addToMycelium: (state, { payload }: { payload: MyceliumObject }) => {
+      state.data.mycelium += payload.mycelium;
+      state.data.myceliumNotation += payload.myceliumNotation;
+    },
+    subtractFromMycelium: (state, { payload }: { payload: MyceliumObject }) => {
+      state.data.mycelium -= payload.mycelium;
+      state.data.myceliumNotation -= payload.myceliumNotation;
+    },
+  },
   extraReducers: (build) => {
     build
       .addMatcher(
@@ -88,6 +104,11 @@ const slice = createSlice({
   },
 });
 
+export const { addToMycelium, subtractFromMycelium } = slice.actions;
 export const selectUser = (state: RootState) => state?.[slice.name].data;
+export const selectUserMycelium = (state: RootState): MyceliumObject => ({
+  mycelium: state?.[slice.name].data?.mycelium,
+  myceliumNotation: state?.[slice.name].data?.myceliumNotation,
+});
 
 export default slice;
