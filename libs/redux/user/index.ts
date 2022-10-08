@@ -88,4 +88,6 @@ const slice = createSlice({
   },
 });
 
+export const selectUser = (state: RootState) => state?.[slice.name].data;
+
 export default slice;
