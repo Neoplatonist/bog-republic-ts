@@ -6,15 +6,11 @@ const baseQuery = fetchBaseQuery({
   baseUrl: process.env.NEXT_PUBLIC_backendAPI || 'http://localhost:3001',
   // eslint-disable-next-line no-unused-vars
   prepareHeaders: (headers, { getState }) => {
-    // authentication bearer token goes here
-
-    // const { token } = (getState() as RootState).auth;
-    // if (token) {
-    //   headers.set('authorization', `Bearer ${token}`);
-    // }
-
-    console.log('baseQuery headers', headers);
-    console.log('baseQuery getState', getState());
+    // Get the token from local storage
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('idToken');
+      if (token) headers.set('authorization', `Bearer ${token}`);
+    }
 
     return headers;
   },
@@ -36,7 +32,7 @@ const clientApi = createApi({
    * Tag types must be defined in the original API definition
    * for any tags that would be provided by injected endpoints
    */
-  tagTypes: ['TerrainsApi'],
+  tagTypes: ['TerrainsApi', 'UserApi'],
   /**
    * This api has endpoints injected from other files,
    * which is why no endpoints are defined here.

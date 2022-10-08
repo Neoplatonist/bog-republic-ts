@@ -14,11 +14,15 @@ import {
 } from '@/libs/redux/terrains';
 import TerrainsApi from '@/libs/redux/terrains/api';
 import styles from '@/styles/Game.module.css';
+import { useGetUserQuery } from '@/libs/redux/user/api';
 
 const Game: NextPageWithAuth = () => {
   const router = useRouter();
   const terrains = useTypedSelector(selectTerrains);
   const terrainErrors = useTypedSelector(selectTerrainErrors);
+
+  // Get user data as soon as they log in
+  useGetUserQuery('');
 
   // Logs the user out
   const handleLogout = (event: MouseEvent<HTMLButtonElement>) => {
@@ -72,6 +76,7 @@ const Game: NextPageWithAuth = () => {
 export const getStaticProps = storeWithWrapper.getStaticProps(store => async () => {
   // Fetch the data with rtk-query
   await store.dispatch(TerrainsApi.endpoints.getTerrains.initiate(''));
+
   // Grab the data or error data from the store
   const { data, isError, error } = TerrainsApi.endpoints.getTerrains.select('')(store.getState());
 
