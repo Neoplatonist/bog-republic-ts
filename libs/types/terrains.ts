@@ -5,13 +5,13 @@ export const TerrainObjectSchema = z.object({
   id: z.number(),
   name: z.string(),
   description: z.string(),
-  image_url: z.string(),
+  imageUrl: z.string(),
   coefficient: z.number(),
-  base_cost: z.number(),
-  base_cost_notation: z.number(),
+  baseCost: z.number(),
+  baseCostNotation: z.number(),
   income: z.number(),
-  income_notation: z.number(),
-  wait_time: z.number(),
+  incomeNotation: z.number(),
+  waitTime: z.number(),
   guardian: GuardianObjectSchema,
 });
 

@@ -2,16 +2,16 @@ import { z } from 'zod';
 
 export const UserObjectSchema = z.object({
   id: z.number(),
-  created_at: z.string(),
-  updated_at: z.string(),
-  user_id: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  userId: z.string(),
   username: z.string(),
   email: z.string(),
   flags: z.number(),
   mycelium: z.number(),
-  mycelium_notation: z.number(),
+  myceliumNotation: z.number(),
   permissions: z.null(),
-  user_terrains: z.null(),
+  userTerrains: z.null(),
 });
 
 export const UserObjectListSchema = z.array(UserObjectSchema);

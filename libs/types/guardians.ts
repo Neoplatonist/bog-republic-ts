@@ -4,10 +4,10 @@ export const GuardianObjectSchema = z.object({
   id: z.number(),
   name: z.string(),
   description: z.string(),
-  image_url: z.string(),
-  terrain_id: z.number(),
+  imageUrl: z.string(),
+  terrainId: z.number(),
   cost: z.number(),
-  cost_notation: z.number(),
+  costNotation: z.number(),
 });
 
 export const GuardianObjectListSchema = z.array(GuardianObjectSchema);
