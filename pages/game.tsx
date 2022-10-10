@@ -78,7 +78,7 @@ const Game: NextPageWithAuth = () => {
     <div>
       {/* User Stats Card */}
       <div className={styles.userStats}>
-        <p>User: {user && user.username}</p>
+        <p>{user && user.username} the Frog</p>
 
         <button type='button' onClick={handleLogout}>Logout</button>
       </div>

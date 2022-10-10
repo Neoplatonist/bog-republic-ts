@@ -6,6 +6,7 @@ export const UserObjectSchema = z.object({
   updatedAt: z.string(),
   userId: z.string(),
   username: z.string(),
+  name: z.string(),
   email: z.string(),
   flags: z.number(),
   mycelium: z.number(),
