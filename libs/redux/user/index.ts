@@ -56,15 +56,13 @@ const slice = createSlice({
           // Handle schema check errors
           if (!user.success) {
             // console.log({ userAcceptedErrors: user.error.issues });
-            const error = user.error.issues.map(
-              (issue) =>
-                `UserAPI -> getUser typecheck failed -> ${issue.path[0]}: ${issue.message}`
-            );
             // error.forEach((err) => console.error(err));
             state.errors = [
               FETCH_USER_FAILED,
               'UserAPI -> getUser typecheck failed',
-              ...error,
+              ...user.error.issues.map(
+                (issue) => `${issue.path[0]}: ${issue.message}`
+              ),
             ];
             return;
           }

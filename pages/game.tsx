@@ -1,7 +1,7 @@
 import React, { MouseEvent } from 'react';
-import { NextPageWithAuth } from '@/libs/types';
 import { useRouter } from 'next/router';
 import { getAuth, signOut } from 'firebase/auth';
+import { NextPageWithAuth } from '@/libs/types';
 import {
   storeWithWrapper,
   useAppThunkDispatch,
@@ -11,27 +11,25 @@ import {
   selectTerrainErrors,
   selectTerrains,
   setTerrainError,
-  setTerrains
+  setTerrains,
 } from '@/libs/redux/terrains';
-import { addToMycelium, subtractFromMycelium, selectUserMycelium } from '@/libs/redux/user';
 import TerrainsApi from '@/libs/redux/terrains/api';
-import { useGetUserQuery } from '@/libs/redux/user/api';
+import { addToMycelium, subtractFromMycelium, selectUserMycelium, selectUser } from '@/libs/redux/user';
+// import { useGetUserQuery } from '@/libs/redux/user/api';
 import styles from '@/styles/Game.module.css';
 
 const Game: NextPageWithAuth = () => {
   // NextJS
   const router = useRouter();
 
+  // Redux Action Dispatcher
+  const dispatch = useAppThunkDispatch();
+
   // Selectors
   const terrains = useTypedSelector(selectTerrains);
   const terrainErrors = useTypedSelector(selectTerrainErrors);
-
-  // Dispatch
-  const dispatch = useAppThunkDispatch();
+  const user = useTypedSelector(selectUser);
   const { mycelium, myceliumNotation } = useTypedSelector(selectUserMycelium);
-
-  // Get user data as soon as they log in
-  const { data: user } = useGetUserQuery('');
 
   /**
    * TODO: Add proper error/warning to the UI.
@@ -49,7 +47,7 @@ const Game: NextPageWithAuth = () => {
     );
   }
 
-  // User Actions -------------------------------------------------------------
+  // ---------------------------------- User Actions ----------------------------------
   // Logs the user out
   const handleLogout = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -75,6 +73,7 @@ const Game: NextPageWithAuth = () => {
     }));
   };
 
+  // ---------------------------------- Game Component ----------------------------------
   return (
     <div>
       {/* User Stats Card */}
