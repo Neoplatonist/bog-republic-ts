@@ -32,7 +32,7 @@ const clientApi = createApi({
    * Tag types must be defined in the original API definition
    * for any tags that would be provided by injected endpoints
    */
-  tagTypes: ['TerrainsApi', 'UserGuardiansAPI', 'UserApi'],
+  tagTypes: ['TerrainsApi', 'UserGuardiansApi', 'UserApi'],
   /**
    * This api has endpoints injected from other files,
    * which is why no endpoints are defined here.
