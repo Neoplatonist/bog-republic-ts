@@ -1,14 +1,14 @@
 import clientApi from '../clientApi';
 
-const userGuardiansApi = clientApi.injectEndpoints({
+const UserGuardiansAPI = clientApi.injectEndpoints({
   endpoints: (build) => ({
     getuserGuardians: build.query({
-      query: () => `/terrain`,
-      providesTags: ['userGuardiansApi'],
+      query: () => `/guardian`,
+      providesTags: ['UserGuardiansAPI'],
     }),
   }),
 });
 
-export const { useGetuserGuardiansQuery } = userGuardiansApi;
+export const { useGetuserGuardiansQuery } = UserGuardiansAPI;
 
-export default userGuardiansApi;
+export default UserGuardiansAPI;
