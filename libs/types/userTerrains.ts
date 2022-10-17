@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const UserTerrainSchema = z.object({
+export const UserTerrainsObjectSchema = z.object({
   id: z.number(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -10,12 +10,14 @@ export const UserTerrainSchema = z.object({
   currentIncomeNotation: z.number(),
   nextCost: z.number(),
   nextCostNotation: z.number(),
-  number_owned: z.number(),
+  numberOwned: z.number(),
   isManaged: z.boolean(),
   isContributionLocked: z.boolean(),
 });
 
-export const UserTerrainListSchema = z.array(UserTerrainSchema);
+export const UserTerrainsObjectListSchema = z.array(UserTerrainsObjectSchema);
 
-export type UserTerrain = z.infer<typeof UserTerrainSchema>;
-export type UserTerrainList = z.infer<typeof UserTerrainListSchema>;
+export type UserTerrainsObject = z.infer<typeof UserTerrainsObjectSchema>;
+export type UserTerrainsObjectList = z.infer<
+  typeof UserTerrainsObjectListSchema
+>;
