@@ -1,14 +1,14 @@
 import clientApi from '../clientApi';
 
-const UserTerriansAPI = clientApi.injectEndpoints({
+const UserTerrainsApi = clientApi.injectEndpoints({
   endpoints: (build) => ({
-    getuserTerrians: build.query({
+    getuserTerrains: build.query({
       query: () => `/user-terrain`,
-      providesTags: ['UserTerriansAPI'],
+      providesTags: ['UserTerrainsApi'],
     }),
   }),
 });
 
-export const { useGetuserTerriansQuery } = UserTerriansAPI;
+export const { useGetuserTerrainsQuery } = UserTerrainsApi;
 
-export default UserTerriansAPI;
+export default UserTerrainsApi;
