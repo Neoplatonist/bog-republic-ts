@@ -1,6 +1,4 @@
 import React, { MouseEvent } from 'react';
-import { useRouter } from 'next/router';
-import { getAuth, signOut } from 'firebase/auth';
 import { NextPageWithAuth } from '@/libs/types';
 import {
   storeWithWrapper,
@@ -14,21 +12,18 @@ import {
   setTerrains,
 } from '@/libs/redux/terrains';
 import TerrainsApi from '@/libs/redux/terrains/api';
-import { addToMycelium, subtractFromMycelium, selectUserMycelium, selectUser } from '@/libs/redux/user';
+import { addToMycelium, subtractFromMycelium, selectUserMycelium } from '@/libs/redux/user';
 // import { useGetUserQuery } from '@/libs/redux/user/api';
+import GameLayout from '@/layout/game';
 import styles from '@/styles/Game.module.css';
 
 const Game: NextPageWithAuth = () => {
-  // NextJS
-  const router = useRouter();
-
   // Redux Action Dispatcher
   const dispatch = useAppThunkDispatch();
 
-  // Selectors
+  // Redux Selectors
   const terrains = useTypedSelector(selectTerrains);
   const terrainErrors = useTypedSelector(selectTerrainErrors);
-  const user = useTypedSelector(selectUser);
   const { mycelium, myceliumNotation } = useTypedSelector(selectUserMycelium);
 
   /**
@@ -46,14 +41,6 @@ const Game: NextPageWithAuth = () => {
       </div>
     );
   }
-
-  // ---------------------------------- User Actions ----------------------------------
-  // Logs the user out
-  const handleLogout = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    signOut(getAuth())
-      .then(() => router.push('/')); // Redirects to the home page
-  };
 
   // Adds Mycelium to the user's account
   const handleAddMycelium = (event: MouseEvent<HTMLButtonElement>) => {
@@ -75,14 +62,7 @@ const Game: NextPageWithAuth = () => {
 
   // ---------------------------------- Game Component ----------------------------------
   return (
-    <div>
-      {/* User Stats Card */}
-      <div className={styles.userStats}>
-        <p>{user && user.username} the Frog</p>
-
-        <button type='button' onClick={handleLogout}>Logout</button>
-      </div>
-
+    <GameLayout>
       <div>
         <h2>Mycelium: {mycelium} e{myceliumNotation}</h2>
         <button type="button" onClick={handleAddMycelium}>Add Mycelium</button>
@@ -99,7 +79,7 @@ const Game: NextPageWithAuth = () => {
           </li>
         ))}
       </ul>
-    </div >
+    </GameLayout>
   );
 };
 
