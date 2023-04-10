@@ -48,6 +48,11 @@ const GameLayout: FC<Props> = ({ children }) => {
       </header>
 
       {children}
+
+      {/* Footer */}
+      <footer>
+        <p>MycoMushroom Footer</p>
+      </footer>
     </>
   );
 };
