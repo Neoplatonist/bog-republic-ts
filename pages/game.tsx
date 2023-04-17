@@ -1,10 +1,7 @@
-import React, { MouseEvent } from 'react';
+import React from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { NextPageWithAuth } from '@/libs/types';
-import {
-  storeWithWrapper,
-  useAppThunkDispatch,
-  useTypedSelector
-} from '@/libs/redux';
+import { storeWithWrapper, useTypedSelector } from '@/libs/redux';
 import {
   selectTerrainErrors,
   selectTerrains,
@@ -12,74 +9,38 @@ import {
   setTerrains,
 } from '@/libs/redux/terrains';
 import TerrainsApi from '@/libs/redux/terrains/api';
-import { addToMycelium, subtractFromMycelium, selectUserMycelium } from '@/libs/redux/user';
-// import { useGetUserQuery } from '@/libs/redux/user/api';
 import GameLayout from '@/layout/game';
-import styles from '@/styles/Game.module.css';
+import TerrainCard from '@/components/terrainCard';
+import UserCard from '@/components/userCard';
+import ErrorFallback from '@/components/errorFallback';
 
 const Game: NextPageWithAuth = () => {
-  // Redux Action Dispatcher
-  const dispatch = useAppThunkDispatch();
-
   // Redux Selectors
   const terrains = useTypedSelector(selectTerrains);
   const terrainErrors = useTypedSelector(selectTerrainErrors);
-  const { mycelium, myceliumNotation } = useTypedSelector(selectUserMycelium);
 
-  /**
-   * TODO: Add proper error/warning to the UI.
-   */
   if (terrainErrors?.length) {
-    return (
-      <div>
-        <h1>Errors</h1>
-        <ul>
-          {terrainErrors?.map((error) => (
-            <li key={error}>{error}</li>
-          ))}
-        </ul>
-      </div>
+    terrainErrors?.map(
+      error => {
+        throw new Error(error);
+      }
     );
   }
 
-  // Adds Mycelium to the user's account
-  const handleAddMycelium = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    dispatch(addToMycelium({
-      mycelium: 10,
-      myceliumNotation: 0,
-    }));
-  };
-
-  // Subtracts Mycelium from the user's account
-  const handleSubtractMycelium = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    dispatch(subtractFromMycelium({
-      mycelium: 10,
-      myceliumNotation: 0,
-    }));
-  };
-
-  // ---------------------------------- Game Component ----------------------------------
   return (
     <GameLayout>
-      <div>
-        <h2>Mycelium: {mycelium} e{myceliumNotation}</h2>
-        <button type="button" onClick={handleAddMycelium}>Add Mycelium</button>
-        <button type="button" onClick={handleSubtractMycelium}>Subtract Mycelium</button>
-      </div>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
 
-      {/* Terrain Cards */}
-      <ul className={styles.terrainCard__container}>
-        {terrains?.map((terrain: {
-          name: string; id: React.Key | null | undefined;
-        }) => (
-          <li key={terrain.id} className={styles.terrainCard}>
-            Name: {terrain.name}
-          </li>
-        ))}
-      </ul>
-    </GameLayout>
+        {/* All User Information */}
+        <UserCard />
+
+        {/* Terrain Cards */}
+        <ul className='mx-0 my-8 p-0 list-none'>
+          {terrains?.map(TerrainCard)}
+        </ul>
+
+      </ErrorBoundary>
+    </GameLayout >
   );
 };
 

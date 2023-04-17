@@ -29,7 +29,9 @@
     "**/*.tsx",
     "layout/*.tsx",
     "components/*.tsx",
-    "libs/types/index.js"
+    "libs/types/index.js",
+    "node_modules/@types",
+    "test/**/**.ts"
   ],
   "exclude": ["node_modules", ".next"]
 }

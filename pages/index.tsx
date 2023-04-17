@@ -14,13 +14,13 @@ const Home: NextPage = () => (
 
     <header className={styles.header}>
       <Link href="/login" passHref>
-        <a>Create User</a>
+        Create User
       </Link>
 
       <br />
 
       <Link href="/login" passHref>
-        <a>Login</a>
+        Login
       </Link>
     </header>
 

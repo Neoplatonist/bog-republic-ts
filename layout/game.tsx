@@ -26,10 +26,14 @@ const GameLayout: FC<Props> = ({ children }) => {
   return (
     <>
       {/* Header */}
-      <header className="navbar bg-success">
+      <header className="navbar bg-success shadow-custom" style={{
+        filter: 'drop-shadow(0 4px 3px rgb(0 0 0 / 0.07)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.06))',
+      }}>
         <div className='flex-1'>
-          <Link href="/game">
-            <a className='btn btn-ghost normal-case text-xl'>Bog Republic</a>
+          <Link href="/game" legacyBehavior>
+            <a className='btn btn-ghost normal-case text-xl'>
+              Bog Republic
+            </a>
           </Link>
         </div>
 
@@ -47,7 +51,9 @@ const GameLayout: FC<Props> = ({ children }) => {
         </div>
       </header>
 
-      {children}
+      <div style={{ flex: '1' }}>
+        {children}
+      </div>
 
       {/* Footer */}
       <footer>
