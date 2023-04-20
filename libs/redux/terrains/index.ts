@@ -4,7 +4,7 @@ import { HYDRATE } from 'next-redux-wrapper';
 import { diff } from 'jsondiffpatch';
 import type { RootState } from '@/libs/redux';
 import { z } from 'zod';
-import { TerrainObjectList, TerrainObjectListSchema } from '@/libs/types';
+import { TerrainObjectListSchema } from '@/libs/types';
 
 const TerrainStateSchema = z.object({
   data: TerrainObjectListSchema,
@@ -75,8 +75,7 @@ const slice = createSlice({
 });
 
 export const { setTerrains, setTerrainError } = slice.actions;
-export const selectTerrains = (state: RootState): TerrainObjectList =>
-  state?.[slice.name].data;
+export const selectTerrains = (state: RootState) => state?.[slice.name].data;
 export const selectTerrainErrors = (state: RootState): string[] | null =>
   state?.[slice.name].errors;
 

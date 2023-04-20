@@ -17,21 +17,11 @@
     "baseUrl": ".",
     "paths": {
       "@/components/*": ["components/*"],
-      "@/layout/*": ["layout/*"],
       "@/libs/*": ["libs/*"],
       "@/pages/*": ["pages/*"],
       "@/styles/*": ["styles/*"]
     }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    "layout/*.tsx",
-    "components/*.tsx",
-    "libs/types/index.js",
-    "node_modules/@types",
-    "test/**/**.ts"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "libs/types/index.js"],
   "exclude": ["node_modules", ".next"]
 }

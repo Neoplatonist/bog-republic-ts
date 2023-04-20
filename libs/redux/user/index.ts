@@ -24,10 +24,7 @@ export const MyceliumObjectSchema = z.object({
 export type MyceliumObject = z.infer<typeof MyceliumObjectSchema>;
 
 const initialState = {
-  data: {
-    mycelium: 0.0,
-    myceliumNotation: 0,
-  },
+  data: {},
   errors: null,
 } as UserState;
 
