@@ -1,0 +1,123 @@
+.terrainCard__container {
+  margin: 2em 0;
+  padding: 0;
+  list-style: none;
+}
+
+.terrainCard__buy {
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  margin: 1em;
+  border-radius: 0.6rem;
+  padding: 1em;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(164, 172, 134, 1);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07))
+    drop-shadow(0 2px 2px rgb(0 0 0 / 0.06));
+}
+
+.terrainCard__buy p {
+  margin: 0;
+  padding: 0;
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+
+.terrainCard {
+  display: flex;
+  flex-direction: column;
+  margin: 1em;
+  border-radius: 0.6rem;
+  padding: 1em;
+  background-color: rgba(164, 172, 134, 1);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07))
+    drop-shadow(0 2px 2px rgb(0 0 0 / 0.06));
+}
+
+.terrainCard__name {
+  margin: 0 auto;
+  padding: 0.2em 3em;
+  background-color: rgba(194, 197, 170, 1);
+  border-radius: 0.3rem;
+}
+
+.terrainCard__info {
+  margin: 1em 0;
+  display: flex;
+  align-items: center;
+}
+
+.terrainCard__image {
+  width: 75px;
+  height: 75px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(70, 63, 58, 1);
+  border-radius: 50%;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.terrainCard__stats {
+  font-size: 1rem;
+  margin-left: 1.5em;
+}
+
+.terrainCard__output {
+}
+
+.terrainCard__statsTitle {
+  display: inline-block;
+  width: 65px;
+}
+
+.terrainCard__actions {
+  height: 50px;
+  display: flex;
+  justify-content: around;
+  width: 100%;
+  gap: 0.5em;
+}
+
+.terrainCard__actions button {
+  display: flex;
+  padding: 0.5em;
+  flex-direction: column;
+  flex-basis: 100%;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(147, 102, 57, 1);
+  color: rgba(255, 255, 255, 1);
+  font-weight: bold;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  border: 1px solid rgba(65, 72, 51, 0.4);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.terrainCard__actions button:nth-child(1) {
+  background-color: rgba(101, 109, 74, 1);
+}
+
+.terrainCard__actions button:nth-child(3) {
+  background-color: rgba(166, 138, 100, 1);
+}
+
+.terrainCard__actions button:hover {
+  background-color: rgba(166, 138, 100, 1);
+}
+
+.terrainCard__actions button p {
+  margin: 0;
+  margin-block-start: 0;
+  margin-block-end: 0;
+  line-height: 1.2;
+}
+
+.terrainCard__actions button p:last-child {
+  margin-top: 0.2em;
+}
