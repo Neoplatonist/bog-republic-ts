@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { RootState } from '@/libs/redux';
 import { UserTerrainsObject, UserTerrainsObjectListSchema } from '@/libs/types';
 import userTerrainsApi from '@/libs/redux/userTerrains/api';
+import { GetIndexById } from '@/libs/redux/userTerrains/utils';
 
 const UserTerrainStateSchema = z.object({
   data: UserTerrainsObjectListSchema,
@@ -22,6 +23,16 @@ const slice = createSlice({
   name: 'userTerrains',
   initialState,
   reducers: {
+    lockHarvest: (state, { payload }) => {
+      const index = GetIndexById(state.data, payload);
+      // eslint-disable-next-line no-param-reassign
+      state.data[index].isContributionLocked = true;
+    },
+    unlockHarvest: (state, { payload }) => {
+      const index = GetIndexById(state.data, payload);
+      // eslint-disable-next-line no-param-reassign
+      state.data[index].isContributionLocked = false;
+    },
   },
   extraReducers: (builder) => {
     builder.addMatcher(
@@ -59,5 +70,8 @@ const slice = createSlice({
     };
   },
 });
+
+// Action creators are generated for each case reducer function
+export const { lockHarvest, unlockHarvest } = slice.actions;
 
 export default slice;
