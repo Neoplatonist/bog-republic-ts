@@ -120,6 +120,9 @@ devDependencies:
   typescript:
     specifier: 4.7.4
     version: 4.7.4
+  whatwg-fetch:
+    specifier: ^3.6.2
+    version: 3.6.2
 
 packages:
 
@@ -6217,6 +6220,10 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       iconv-lite: 0.6.3
+    dev: true
+
+  /whatwg-fetch@3.6.2:
+    resolution: {integrity: sha512-bJlen0FcuU/0EMLrdbJ7zOnW6ITZLrZMIarMUVmdKtsGvZna8vxKYaexICWPfZ8qwf9fzNq+UEIZrnSaApt6RA==}
     dev: true
 
   /whatwg-mimetype@3.0.0:
