@@ -4,7 +4,8 @@ import { HYDRATE } from 'next-redux-wrapper';
 import { diff } from 'jsondiffpatch';
 import type { RootState } from '@/libs/redux';
 import { z } from 'zod';
-import { UserObjectSchema } from '@/libs/types';
+import { Mycelium, UserObjectSchema } from '@/libs/types';
+import { AddMycelium, SubtractMycelium } from '@/libs/myceliumMath';
 import UserApi from './api';
 
 const FETCH_USER_FAILED = 'Error fetching userApi data';
@@ -15,13 +16,6 @@ const UserStateSchema = z.object({
 });
 
 export type UserState = z.infer<typeof UserStateSchema>;
-
-export const MyceliumObjectSchema = z.object({
-  mycelium: z.number(),
-  myceliumNotation: z.number(),
-});
-
-export type MyceliumObject = z.infer<typeof MyceliumObjectSchema>;
 
 const initialState = {
   data: {
@@ -35,13 +29,42 @@ const slice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    addToMycelium: (state, { payload }: { payload: MyceliumObject }) => {
-      state.data.mycelium += payload.mycelium;
-      state.data.myceliumNotation += payload.myceliumNotation;
+    AddToMycelium: (state, { payload }: { payload: Mycelium }) => {
+      const newMycelium = AddMycelium(
+        {
+          mycelium: state.data.mycelium,
+          myceliumNotation: state.data.myceliumNotation,
+        },
+        {
+          mycelium: payload.mycelium,
+          myceliumNotation: payload.myceliumNotation,
+        }
+      );
+
+      state.data = { ...state.data, ...newMycelium };
     },
-    subtractFromMycelium: (state, { payload }: { payload: MyceliumObject }) => {
-      state.data.mycelium -= payload.mycelium;
-      state.data.myceliumNotation -= payload.myceliumNotation;
+    SubtractFromMycelium: (state, { payload }: { payload: Mycelium }) => {
+      if (
+        payload.myceliumNotation > state.data.myceliumNotation ||
+        payload.mycelium >= state.data.mycelium
+      ) {
+        console.info('Cannot subtract more mycelium than you have');
+        state.errors = ['Cannot subtract more mycelium than you have'];
+        return;
+      }
+
+      const newMycelium = SubtractMycelium(
+        {
+          mycelium: state.data.mycelium,
+          myceliumNotation: state.data.myceliumNotation,
+        },
+        {
+          mycelium: payload.mycelium,
+          myceliumNotation: payload.myceliumNotation,
+        }
+      );
+
+      state.data = { ...state.data, ...newMycelium };
     },
   },
   extraReducers: (build) => {
@@ -105,9 +128,11 @@ const slice = createSlice({
   },
 });
 
-export const { addToMycelium, subtractFromMycelium } = slice.actions;
+export const { AddToMycelium, SubtractFromMycelium } = slice.actions;
+export const userReducer = slice.reducer;
+
 export const selectUser = (state: RootState) => state?.[slice.name].data;
-export const selectUserMycelium = (state: RootState): MyceliumObject => ({
+export const selectUserMycelium = (state: RootState): Mycelium => ({
   mycelium: state?.[slice.name].data?.mycelium,
   myceliumNotation: state?.[slice.name].data?.myceliumNotation,
 });
