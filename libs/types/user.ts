@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+export const MyceliumObjectSchema = z.object({
+  mycelium: z.number(),
+  myceliumNotation: z.number(),
+});
+
+export type Mycelium = z.infer<typeof MyceliumObjectSchema>;
+
 export const UserObjectSchema = z.object({
   id: z.number(),
   createdAt: z.string(),
