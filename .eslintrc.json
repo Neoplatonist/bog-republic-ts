@@ -10,19 +10,13 @@
     "eslint:recommended",
     "plugin:react/recommended",
     "airbnb",
-    "airbnb/hooks",
     "prettier"
   ],
+  "plugins": ["react-hooks"],
   "rules": {
     "semi": ["error", "always"],
-    "react/jsx-filename-extension": [
-      2,
-      { "extensions": [".js", ".jsx", ".ts", ".tsx"] }
-    ],
-    "react/function-component-definition": [
-      2,
-      { "namedComponents": ["arrow-function", "function-declaration"] }
-    ],
+    "react/jsx-filename-extension": [2, { "extensions": [".js", ".jsx", ".ts", ".tsx"] }],
+    "react/function-component-definition": [2, { "namedComponents": ["arrow-function", "function-declaration"] }],
     "jsx-a11y/anchor-is-valid": [
       "error",
       {
@@ -31,6 +25,8 @@
         "aspects": ["invalidHref", "preferButton"]
       }
     ],
-    "import/extensions": ["error", { "ignorePackages": true }]
+    "import/extensions": ["error", { "ignorePackages": true }],
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
   }
 }

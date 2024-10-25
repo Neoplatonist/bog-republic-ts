@@ -1,30 +1,34 @@
-import { Mycelium } from '@/libs/types';
+import { MyceliumObject } from '@/libs/types';
 
 /**
  * adjustMyceliumNotation takes a Mycelium and a number and returns a new Mycelium with
  * the exponent adjusted by the difference.
  *
- * @param {Mycelium} m
+ * @param {MyceliumObject} m
  * @param {number} difference
- * @returns {Mycelium}
+ * @returns {MyceliumObject}
  */
-const adjustMyceliumNotation = (m: Mycelium, difference: number): Mycelium => ({
+const adjustMyceliumNotation = (
+  m: MyceliumObject,
+  difference: number
+): MyceliumObject => ({
   mycelium: m.mycelium / 10 ** difference,
   myceliumNotation: m.myceliumNotation + difference,
 });
 
 /**
- * matchMyceliumNotation takes two mycelium and adjusts the exponent of the mycelium with the
+ * MatchMyceliumNotation takes two mycelium and adjusts the exponent of the mycelium with the
  * lower exponent to match the exponent of the mycelium with the higher exponent.
  *
- * @param {Mycelium} m1
- * @param {Mycelium} m2
+ * @export
+ * @param {MyceliumObject} m1
+ * @param {MyceliumObject} m2
  * @returns {[Mycelium, Mycelium]}
  */
-const matchMyceliumNotation = (
-  m1: Mycelium,
-  m2: Mycelium
-): [Mycelium, Mycelium] => {
+export const MatchMyceliumNotation = (
+  m1: MyceliumObject,
+  m2: MyceliumObject
+): [MyceliumObject, MyceliumObject] => {
   if (m1.myceliumNotation > m2.myceliumNotation) {
     return [
       { ...m1 },
@@ -55,12 +59,15 @@ const matchMyceliumNotation = (
  * and the exponent is increased by 1.
  *
  * @export
- * @param {Mycelium} m1
- * @param {Mycelium} m2
- * @returns {Mycelium}
+ * @param {MyceliumObject} m1
+ * @param {MyceliumObject} m2
+ * @returns {MyceliumObject}
  */
-export const AddMycelium = (m1: Mycelium, m2: Mycelium): Mycelium => {
-  const [newM1, newM2] = matchMyceliumNotation(m1, m2);
+export const AddMycelium = (
+  m1: MyceliumObject,
+  m2: MyceliumObject
+): MyceliumObject => {
+  const [newM1, newM2] = MatchMyceliumNotation(m1, m2);
   const mycelium = newM1.mycelium + newM2.mycelium;
   const myceliumNotation =
     mycelium >= 10 ? newM1.myceliumNotation + 1 : newM1.myceliumNotation;
@@ -79,12 +86,15 @@ export const AddMycelium = (m1: Mycelium, m2: Mycelium): Mycelium => {
  * The mycelium of the result is never greater than 9.
  *
  * @export
- * @param {Mycelium} m1
- * @param {Mycelium} m2
- * @returns {Mycelium}
+ * @param {MyceliumObject} m1
+ * @param {MyceliumObject} m2
+ * @returns {MyceliumObject}
  */
-export const SubtractMycelium = (m1: Mycelium, m2: Mycelium): Mycelium => {
-  const [newM1, newM2] = matchMyceliumNotation(m1, m2);
+export const SubtractMycelium = (
+  m1: MyceliumObject,
+  m2: MyceliumObject
+): MyceliumObject => {
+  const [newM1, newM2] = MatchMyceliumNotation(m1, m2);
   const mycelium = newM1.mycelium - newM2.mycelium;
 
   if (mycelium < 0) {
@@ -94,8 +104,24 @@ export const SubtractMycelium = (m1: Mycelium, m2: Mycelium): Mycelium => {
     };
   }
 
+  if (mycelium < 1 && newM1.myceliumNotation > 0) {
+    return {
+      mycelium: mycelium * 10,
+      myceliumNotation: newM1.myceliumNotation - 1,
+    };
+  }
+
   return { mycelium, myceliumNotation: newM1.myceliumNotation };
 };
+
+function adjustExponential(num: MyceliumObject): MyceliumObject {
+  while (num.mycelium >= 10) {
+    num.mycelium /= 10;
+    num.myceliumNotation++;
+  }
+
+  return num;
+}
 
 /**
  * MultiplyMycelium multiplies two Mycelium values. The result is a Mycelium value
@@ -103,17 +129,18 @@ export const SubtractMycelium = (m1: Mycelium, m2: Mycelium): Mycelium => {
  * is the sum of the two multiplicands' exponents.
  *
  * @export
- * @param {Mycelium} m1
- * @param {Mycelium} m2
- * @returns {Mycelium}
+ * @param {MyceliumObject} m1
+ * @param {MyceliumObject} m2
+ * @returns {MyceliumObject}
  */
-export const MultiplyMycelium = (m1: Mycelium, m2: Mycelium): Mycelium => {
+export const MultiplyMycelium = (
+  m1: MyceliumObject,
+  m2: MyceliumObject
+): MyceliumObject => {
   const mycelium = m1.mycelium * m2.mycelium;
   const myceliumNotation = m1.myceliumNotation + m2.myceliumNotation;
-  return {
-    mycelium: mycelium >= 10 ? mycelium / 10 : mycelium,
-    myceliumNotation,
-  };
+
+  return adjustExponential({ mycelium, myceliumNotation });
 };
 
 /**
@@ -122,15 +149,63 @@ export const MultiplyMycelium = (m1: Mycelium, m2: Mycelium): Mycelium => {
  * If the mycelium is less than 10, it is not divided by 10.
  *
  * @export
- * @param {Mycelium} m1
- * @param {Mycelium} m2
- * @returns {Mycelium}
+ * @param {MyceliumObject} m1
+ * @param {MyceliumObject} m2
+ * @returns {MyceliumObject}
  */
-export const DivideMycelium = (m1: Mycelium, m2: Mycelium): Mycelium => {
+export const DivideMycelium = (
+  m1: MyceliumObject,
+  m2: MyceliumObject
+): MyceliumObject => {
   const mycelium = m1.mycelium / m2.mycelium;
   const myceliumNotation = m1.myceliumNotation - m2.myceliumNotation;
   return {
     mycelium: mycelium >= 10 ? mycelium / 10 : mycelium,
     myceliumNotation,
   };
+};
+
+/**
+ * This function takes the current mycelium and exponent and compares it to the cost
+ * mycelium and exponent. It returns a boolean indicating whether the current mycelium
+ * and exponent are less than or equal to the target mycelium and exponent.
+ *
+ * @export
+ * @param {MyceliumObject} current
+ * @param {MyceliumObject} target
+ * @returns {boolean}
+ * @memberof Mycelium
+ */
+export const GreaterThanOrEqualTo = (
+  current: MyceliumObject,
+  cost: MyceliumObject
+): boolean => {
+  const [newCurrent, newCost] = MatchMyceliumNotation(current, cost);
+
+  if (newCurrent.mycelium > newCost.mycelium) return true;
+
+  return false;
+};
+
+/**
+ * Calculates the Exponential Notation of a number
+ * https://stackoverflow.com/questions/11124451/how-can-i-convert-numbers-into-scientific-notation
+ *
+ * @export
+ * @param {number} value
+ * @param {number} [precision=4]
+ * @returns
+ */
+export const ConvertToExponentialNotation = (
+  value: number,
+  precision: number = 4 // default to 4 decimal places
+) => {
+  if (value > 9) {
+    return value
+      .toExponential(precision)
+      .split('e')
+      .map((item) => Number(item));
+  }
+
+  return [parseFloat(value.toFixed(precision)), 0];
 };

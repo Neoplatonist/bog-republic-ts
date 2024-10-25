@@ -20,7 +20,8 @@ const GameLayout: FC<Props> = ({ children }) => {
   const handleLogout = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     signOut(getAuth())
-      .then(() => router.push('/')); // Redirects to the home page
+      .then(() => router.push('/')) // Redirects to the home page
+      .catch((error: any) => console.error(error));
   };
 
   return (

@@ -4,12 +4,17 @@ import { HYDRATE } from 'next-redux-wrapper';
 // Create our baseQuery instance
 const baseQuery = fetchBaseQuery({
   baseUrl: process.env.NEXT_PUBLIC_backendAPI || 'http://localhost:3001',
+  mode: 'cors',
   // eslint-disable-next-line no-unused-vars
   prepareHeaders: (headers, { getState }) => {
     // Get the token from local storage
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('idToken');
-      if (token) headers.set('authorization', `Bearer ${token}`);
+      const token = localStorage.getItem('tokenId');
+
+      if (token) {
+        headers.set('Content-Type', 'application/json; charset=utf-8');
+        headers.set('authorization', `Bearer ${token}`);
+      }
     }
 
     return headers;

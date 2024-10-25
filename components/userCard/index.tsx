@@ -29,9 +29,7 @@ function UserCard() {
             alt="Default Frog"
             width={100}
             height={100}
-            layout="fixed"
-            priority
-          />
+            priority />
         </div>
 
         {/* User Ranking */}

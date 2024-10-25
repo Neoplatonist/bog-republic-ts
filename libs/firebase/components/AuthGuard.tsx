@@ -1,13 +1,21 @@
-import { useEffect } from 'react';
-import { useRouter } from 'next/router';
+'use client';
+
+import React, { FC, ReactElement, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/libs/firebase/firebaseApp';
 import { useAppThunkDispatch } from '@/libs/redux';
 import UserApi, { useGetUserQuery } from '@/libs/redux/user/api';
+import Loading from '@/components/loading';
+import { User } from 'firebase/auth';
 
-interface Props {
-  children: JSX.Element;
+interface AuthGuardProps {
+  children: ReactElement;
+  // eslint-disable-next-line react/require-default-props
+  passthrough?: boolean;
 }
+
+type UserState = User | null;
 
 /**
  * Wrapper component that checks whether a user is logged in or not.
@@ -15,50 +23,77 @@ interface Props {
  * If the user is logged in, it will render the children components.
  *
  * @export
- * @param {Props} { children }
- * @returns
+ * @param {AuthGuardProps} { children, passthrough = false }
+ * @returns {ReactElement}
  */
-const AuthGuard = ({ children }: Props) => {
+const AuthGuard: FC<AuthGuardProps> = ({ children, passthrough = false }) => {
   const [user, loading] = useAuthState(auth);
   const router = useRouter();
 
   const dispatch = useAppThunkDispatch();
-  const { data: serverUser } = useGetUserQuery('');
+  const { data: serverUser, error: serverError } = useGetUserQuery('');
 
   // Detects changes as to whether the user is not logged in.
   // If not logged in, redirect to the login page.
   useEffect(() => {
-    auth.onAuthStateChanged(
-      async (_userState) => {
-        if (!_userState) {
-          router.push('/login');
-          return;
-        }
+    const handleAuthError = (_authError: Error) => {
+      console.error('auth error', _authError);
 
-        const token = JSON.stringify(await _userState?.getIdToken());
-        const idToken = token !== '' ? JSON.parse(await token) : '';
-        localStorage.setItem('idToken', idToken);
+      // clear localstorage
+      localStorage.setItem('tokenId', '');
+      // firebase signout
+      auth.signOut();
+      // redirect to login
+      router.push('/login');
+    };
 
-        // If the user is logged in with firebase, but not the server.
-        if (!serverUser) {
-          dispatch(UserApi.endpoints.userLogin.initiate(''));
-        }
-      },
-      // eslint-disable-next-line no-unused-vars
-      (_authError) => {
-        localStorage.setItem('idToken', '');
+    const handleAuthStateChanged = async (_userState: UserState) => {
+      if (!_userState) {
         router.push('/login');
+        return;
       }
-    );
-  }, [dispatch, router, serverUser]);
 
-  // if auth initialized with a valid user show protected page
-  if (!loading && user) {
-    return children;
-  }
+      // get the user's tokenId and store it in localstorage
+      const token = JSON.stringify(await _userState?.getIdToken());
+      const tokenId = token !== '' ? JSON.parse(token) : '';
+      localStorage.setItem('tokenId', tokenId);
 
-  /* otherwise don't return anything, will do a redirect from useEffect */
-  return null;
+      // If the user is logged in with firebase, but not the server.
+      // Then try logging in with the server.
+      // If the server login fails, then log out of firebase.
+      if (!serverUser && !serverError) {
+        const { error }: any = await dispatch(UserApi.endpoints.userLogin.initiate(''));
+
+        if (error) {
+          console.error('dispatch UserApi error', error);
+          handleAuthError(error);
+        };
+      }
+    };
+
+    // watches for changes in the user's authentication state
+    const unsubscribe = auth.onAuthStateChanged(handleAuthStateChanged, handleAuthError);
+
+    // unsubscribe to the auth listener when unmounting
+    return () => unsubscribe();
+  }, [dispatch, router, serverError, serverUser]);
+
+  // These two Loading components need the isServer flag set to true,
+  // otherwise the server complains that the client and server are different.
+  // Maybe in Production, change window to be 'Window is Loading'
+  if (typeof window === 'undefined')
+    return <Loading text='Window is Loading' isServer />;
+
+  const isTokenLocal = localStorage?.getItem('tokenId');
+  if (loading || !user || !isTokenLocal || passthrough)
+    return <Loading text='AuthGuard is Loading' isServer />;
+
+  return (
+    // eslint-disable-next-line react/jsx-no-useless-fragment
+    <>
+      {children}
+    </>
+  );
 };
 
 export default AuthGuard;

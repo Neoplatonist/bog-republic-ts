@@ -1,0 +1,4 @@
+{
+  "jest.jestCommandLine": "nvm use lts/hydrogen && npm run test",
+  "jest.rootPath": "/mnt/nas/javascript/esoteric.garden/bog-republic-ts"
+}

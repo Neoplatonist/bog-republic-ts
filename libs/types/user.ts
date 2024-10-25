@@ -5,7 +5,7 @@ export const MyceliumObjectSchema = z.object({
   myceliumNotation: z.number(),
 });
 
-export type Mycelium = z.infer<typeof MyceliumObjectSchema>;
+export type MyceliumObject = z.infer<typeof MyceliumObjectSchema>;
 
 export const UserObjectSchema = z.object({
   id: z.number(),

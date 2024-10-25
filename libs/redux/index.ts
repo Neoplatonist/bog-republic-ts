@@ -1,16 +1,20 @@
+/* eslint-disable import/no-cycle */
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import {
   AnyAction,
   configureStore,
   ConfigureStoreOptions,
+  createAction,
   ThunkDispatch,
 } from '@reduxjs/toolkit';
-import { Context, createWrapper } from 'next-redux-wrapper';
+import { setupListeners } from '@reduxjs/toolkit/dist/query';
+import { Context, HYDRATE, createWrapper } from 'next-redux-wrapper';
 
 // import reducers
-import terrainsReducer from './terrains';
-import userReducer from './user';
-import userTerrains from './userTerrains';
+import terrainsSlice from './terrains';
+import timerSlice from './timers';
+import userSlice from './user';
+import userTerrainsSlice from './userTerrains';
 import clientApi from './clientApi';
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -21,9 +25,10 @@ export const createStore: any = (
   configureStore({
     reducer: {
       // Reducers
-      [terrainsReducer.name]: terrainsReducer.reducer,
-      [userReducer.name]: userReducer.reducer,
-      [userTerrains.name]: userTerrains.reducer,
+      [terrainsSlice.name]: terrainsSlice.reducer,
+      [timerSlice.name]: timerSlice.reducer,
+      [userSlice.name]: userSlice.reducer,
+      [userTerrainsSlice.name]: userTerrainsSlice.reducer,
 
       // Query and Mutations
       [clientApi.reducerPath]: clientApi.reducer,
@@ -58,3 +63,8 @@ export const useAppDispatch: () => AppDispatch = useDispatch;
 // ThunkDispatch with Type
 export type AppThunkDispatch = ThunkDispatch<RootState, any, AnyAction>;
 export const useAppThunkDispatch: () => AppThunkDispatch = useDispatch;
+
+// Hydrate state
+export const HydrateState = createAction(HYDRATE);
+
+setupListeners(store.dispatch);
