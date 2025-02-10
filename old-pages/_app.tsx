@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import { NextPageWithAuth } from '@/libs/types';
-import AuthGuard from '@/libs/firebase/components/AuthGuard';
+// import AuthGuard from '@/libs/firebase/components/AuthGuard';
 import { storeWithWrapper } from '@/libs/redux';
 import '../styles/globals.css';
 
@@ -14,9 +14,9 @@ function MyApp({
 }) {
   if (Component.requireAuth) {
     return (
-      <AuthGuard>
+      // <AuthGuard>
         <Component {...pageProps} />
-      </AuthGuard>
+      // </AuthGuard>
     );
   }
 

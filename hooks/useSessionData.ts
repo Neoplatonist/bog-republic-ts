@@ -28,23 +28,23 @@ export function useSessionData(): HankoSession {
       const isValid = hanko.session.isValid();
       const session = hanko.session.get();
 
-      if (isValid && session) {
-        const { userID, jwt = "" } = session;
-        setSessionState({
-          userID,
-          jwt,
-          isValid,
-          loading: false,
-          error: null,
-        });
-      } else {
-        setSessionState((prevState) => ({
-          ...prevState,
-          isValid: false,
-          loading: false,
-          error: "Invalid session",
-        }));
-      }
+      // if (isValid && session) {
+      //   const { userID, jwt = "" } = session;
+      //   setSessionState({
+      //     userID,
+      //     jwt,
+      //     isValid,
+      //     loading: false,
+      //     error: null,
+      //   });
+      // } else {
+      //   setSessionState((prevState) => ({
+      //     ...prevState,
+      //     isValid: false,
+      //     loading: false,
+      //     error: "Invalid session",
+      //   }));
+      // }
     }
   }, [hanko]);
 

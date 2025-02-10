@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useEffect, useState } from "react";
 import { register } from "@teamhanko/hanko-elements";
@@ -19,5 +19,7 @@ export default function HankoProfile() {
     return <div>{stateError}</div>;
   }
 
+  // @ts-ignore
+  // eslint-disable-next-line react/jsx-no-undef
   return <hanko-profile />;
 }
