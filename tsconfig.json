@@ -1,7 +1,12 @@
 {
   "compilerOptions": {
+    "typeRoots": ["./types", "./node_modules/@types"],
     "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -16,22 +21,40 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@/components/*": ["components/*"],
-      "@/layout/*": ["layout/*"],
-      "@/libs/*": ["libs/*"],
-      "@/pages/*": ["pages/*"],
-      "@/styles/*": ["styles/*"]
-    }
+      "@/auth": [
+        "./auth.ts"
+      ],
+      "@/components/*": [
+        "components/*"
+      ],
+      "@/libs/*": [
+        "libs/*"
+      ],
+      "@/hooks/*": [
+        "hooks/*"
+      ],
+      "@/pages/*": [
+        "old-pages/*"
+      ],
+      "@/styles/*": [
+        "styles/*"
+      ]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "layout/*.tsx",
-    "components/*.tsx",
     "libs/types/index.js",
-    "node_modules/@types",
-    "test/**/**.ts"
+    "next-env.d.ts",
+    ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next"]
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
 }

@@ -18,10 +18,7 @@ const UserStateSchema = z.object({
 export type UserState = z.infer<typeof UserStateSchema>;
 
 const initialState = {
-  data: {
-    mycelium: 0.0,
-    myceliumNotation: 0,
-  },
+  data: {},
   errors: null,
 } as UserState;
 
