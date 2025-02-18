@@ -1,0 +1,1485 @@
+Redux State Changes
+diff --git a/clientApi.ts b/clientApi.ts
+index 6ade6f2..bb58cfc 100755
+--- a/clientApi.ts
++++ b/clientApi.ts
+@@ -4,17 +4,12 @@ import { HYDRATE } from 'next-redux-wrapper';
+ // Create our baseQuery instance
+ const baseQuery = fetchBaseQuery({
+   baseUrl: process.env.NEXT_PUBLIC_backendAPI || 'http://localhost:3001',
+-  mode: 'cors',
+   // eslint-disable-next-line no-unused-vars
+   prepareHeaders: (headers, { getState }) => {
+     // Get the token from local storage
+     if (typeof window !== 'undefined') {
+-      const token = localStorage.getItem('tokenId');
+-
+-      if (token) {
+-        headers.set('Content-Type', 'application/json; charset=utf-8');
+-        headers.set('authorization', `Bearer ${token}`);
+-      }
++      const token = localStorage.getItem('idToken');
++      if (token) headers.set('authorization', `Bearer ${token}`);
+     }
+ 
+     return headers;
+diff --git a/index.ts b/index.ts
+index 225454b..4571728 100755
+--- a/index.ts
++++ b/index.ts
+@@ -1,20 +1,15 @@
+-/* eslint-disable import/no-cycle */
+ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+ import {
+   AnyAction,
+   configureStore,
+   ConfigureStoreOptions,
+-  createAction,
+   ThunkDispatch,
+ } from '@reduxjs/toolkit';
+-import { setupListeners } from '@reduxjs/toolkit/dist/query';
+-import { Context, HYDRATE, createWrapper } from 'next-redux-wrapper';
++import { Context, createWrapper } from 'next-redux-wrapper';
+ 
+ // import reducers
+-import terrainsSlice from './terrains';
+-import timerSlice from './timers';
+-import userSlice from './user';
+-import userTerrainsSlice from './userTerrains';
++import terrainsReducer from './terrains';
++import userReducer from './user';
+ import clientApi from './clientApi';
+ 
+ const isDev = process.env.NODE_ENV === 'development';
+@@ -25,10 +20,8 @@ export const createStore: any = (
+   configureStore({
+     reducer: {
+       // Reducers
+-      [terrainsSlice.name]: terrainsSlice.reducer,
+-      [timerSlice.name]: timerSlice.reducer,
+-      [userSlice.name]: userSlice.reducer,
+-      [userTerrainsSlice.name]: userTerrainsSlice.reducer,
++      [terrainsReducer.name]: terrainsReducer.reducer,
++      [userReducer.name]: userReducer.reducer,
+ 
+       // Query and Mutations
+       [clientApi.reducerPath]: clientApi.reducer,
+@@ -63,8 +56,3 @@ export const useAppDispatch: () => AppDispatch = useDispatch;
+ // ThunkDispatch with Type
+ export type AppThunkDispatch = ThunkDispatch<RootState, any, AnyAction>;
+ export const useAppThunkDispatch: () => AppThunkDispatch = useDispatch;
+-
+-// Hydrate state
+-export const HydrateState = createAction(HYDRATE);
+-
+-setupListeners(store.dispatch);
+diff --git a/terrains/index.ts b/terrains/index.ts
+index f2188e2..db257ed 100755
+--- a/terrains/index.ts
++++ b/terrains/index.ts
+@@ -1,14 +1,10 @@
+ /* eslint-disable no-param-reassign */
+-import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+-import { diff } from 'jsondiffpatch';
++import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+ import { HYDRATE } from 'next-redux-wrapper';
+-// eslint-disable-next-line import/no-cycle
+-import { RootState } from '@/libs/redux';
++import { diff } from 'jsondiffpatch';
++import type { RootState } from '@/libs/redux';
+ import { z } from 'zod';
+-import { TerrainObjectList, TerrainObjectListSchema } from '@/libs/types';
+-import TerrainsApi from './api';
+-
+-const FETCH_TERRAINS_FAILED = 'Error fetching terrainsApi data';
++import { TerrainObjectListSchema } from '@/libs/types';
+ 
+ const TerrainStateSchema = z.object({
+   data: TerrainObjectListSchema,
+@@ -22,17 +18,10 @@ const initialState = {
+   errors: null,
+ } as TerrainState;
+ 
+-const terrainsSlice = createSlice({
++const slice = createSlice({
+   name: 'terrains',
+   initialState,
+   reducers: {
+-    /**
+-     * setTerrains is a reducer function that sets the terrains data in the state.
+-     * It takes the state and a payload containing the terrains data as input.
+-     * If the payload passes the type check, it updates the state with the new data.
+-     * If the payload fails the type check, it updates the state with an empty data array
+-     * and sets the errors array with type check error messages.
+-     */
+     setTerrains: (state, { payload }) => {
+       const terrainsData = TerrainObjectListSchema.safeParse(payload);
+ 
+@@ -51,13 +40,6 @@ const terrainsSlice = createSlice({
+         state.errors = null;
+       }
+     },
+-    /**
+-     * setTerrainError is a reducer function that sets a terrain error in the state.
+-     * It takes the state and a payload containing the error string or null as input.
+-     * If the payload is null, it clears the errors array in the state.
+-     * If the errors array is null, it sets the errors array with the payload as a single element.
+-     * Otherwise, it appends the payload to the existing errors array.
+-     */
+     setTerrainError: (state, { payload }) => {
+       if (payload == null) {
+         state.errors = null;
+@@ -68,80 +50,33 @@ const terrainsSlice = createSlice({
+       }
+     },
+   },
+-  extraReducers: (builder) => {
+-    const HydrateState = createAction(HYDRATE);
+-
+-    builder
+-      // https://github.com/kirill-konshin/next-redux-wrapper#how-it-works
+-      // This allows for rehydration of the store from the server
+-      // while on the client side.
+-      // This is needed for SSR and SSG.
+-      .addCase(HydrateState, (state: RootState, action: PayloadAction<any>) => {
+-        const stateDiff = diff(state, action.payload);
+-        const wasBumpedOnClient = stateDiff?.terrains?.data;
+-
+-        // keep existing state or use hydrated state
+-        const data = wasBumpedOnClient
+-          ? state.terrains
+-          : action.payload.terrains;
+-
+-        // New State
+-        return {
+-          ...state.terrains,
+-          ...action.payload.terrains,
+-          // keep existing state or use hydrated
+-          ...data,
+-        };
+-      })
+-      .addMatcher(
+-        TerrainsApi.endpoints.getTerrains.matchFulfilled,
+-        (state, { payload }) => {
+-          // Check if query response matches schema
+-          const terrains = TerrainObjectListSchema.safeParse(payload);
+-
+-          // Handle schema check errors
+-          if (!terrains.success) {
+-            state.errors = [
+-              FETCH_TERRAINS_FAILED,
+-              'TerrainsApi -> getTerrains typecheck failed',
+-              ...terrains.error.issues.map(
+-                (issue) => `${issue.path[0]}: ${issue.message}`
+-              ),
+-            ];
+-            return;
+-          }
+-
+-          // Handle schema check success; update state
+-          state.data = [...state.data, ...terrains.data];
+-          state.errors = null;
+-        }
+-      )
+-      .addMatcher(TerrainsApi.endpoints.getTerrains.matchRejected, (state) => {
+-        state.errors = [
+-          FETCH_TERRAINS_FAILED,
+-          'TerrainsApi -> getTerrains rejected',
+-        ];
+-      });
++  extraReducers: {
++    // https://github.com/kirill-konshin/next-redux-wrapper#how-it-works
++    // This allows for rehydration of the store from the server
++    // while on the client side.
++    // This is needed for SSR and SSG.
++    [HYDRATE]: (state: RootState, action: PayloadAction<any>) => {
++      const stateDiff = diff(state, action.payload);
++      const wasBumpedOnClient = stateDiff?.terrains?.data;
++
++      // keep existing state or use hydrated state
++      const data = wasBumpedOnClient ? state.terrains : action.payload.terrains;
++
++      const newState = {
++        ...state.terrains,
++        ...action.payload.terrains,
++        // keep existing state or use hydrated
++        ...data,
++      };
++
++      return newState;
++    },
+   },
+ });
+ 
+-/**
+- * Action creators generated for each case reducer function.
+- */
+-export const { setTerrains, setTerrainError } = terrainsSlice.actions;
+-
+-/**
+- * selectTerrains is a selector function that retrieves the terrains data from the state.
+- * It takes the RootState as input and returns the terrain object list.
+- */
+-export const selectTerrains = (state: RootState): TerrainObjectList =>
+-  state?.[terrainsSlice.name].data as TerrainObjectList;
+-
+-/**
+- * selectTerrainErrors is a selector function that retrieves the terrain errors from the state.
+- * It takes the RootState as input and returns the array of error strings or null if there are no errors.
+- */
++export const { setTerrains, setTerrainError } = slice.actions;
++export const selectTerrains = (state: RootState) => state?.[slice.name].data;
+ export const selectTerrainErrors = (state: RootState): string[] | null =>
+-  state?.[terrainsSlice.name].errors;
++  state?.[slice.name].errors;
+ 
+-export default terrainsSlice;
++export default slice;
+diff --git a/timers/index.ts b/timers/index.ts
+deleted file mode 100755
+index a513120..0000000
+--- a/timers/index.ts
++++ /dev/null
+@@ -1,149 +0,0 @@
+-/* eslint-disable no-param-reassign */
+-import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+-import { diff } from 'jsondiffpatch';
+-import { HYDRATE } from 'next-redux-wrapper';
+-// eslint-disable-next-line import/no-cycle
+-import { RootState } from '@/libs/redux';
+-
+-type Timer = {
+-  duration: number;
+-  startTime: number;
+-  isLocked: boolean;
+-};
+-
+-interface TimerState {
+-  [timerId: number]: Timer;
+-}
+-
+-/**
+- * Initial state for the timerSlice.
+- */
+-const initialState = {
+-  1: {
+-    duration: 1000,
+-    startTime: 0,
+-    isLocked: false,
+-  },
+-  2: {
+-    duration: 1000,
+-    startTime: 0,
+-    isLocked: false,
+-  },
+-  3: {
+-    duration: 1000,
+-    startTime: 0,
+-    isLocked: false,
+-  },
+-  4: {
+-    duration: 1000,
+-    startTime: 0,
+-    isLocked: false,
+-  },
+-  5: {
+-    duration: 1000,
+-    startTime: 0,
+-    isLocked: false,
+-  },
+-  6: {
+-    duration: 1000,
+-    startTime: 0,
+-    isLocked: false,
+-  },
+-  7: {
+-    duration: 1000,
+-    startTime: 0,
+-    isLocked: false,
+-  },
+-  8: {
+-    duration: 1000,
+-    startTime: 0,
+-    isLocked: false,
+-  },
+-  9: {
+-    duration: 1000,
+-    startTime: 0,
+-    isLocked: false,
+-  },
+-} as TimerState;
+-
+-/**
+- * Redux slice for managing terrain timer-related state.
+- */
+-const timerSlice = createSlice({
+-  name: 'timers',
+-  initialState,
+-  reducers: {
+-    /**
+-     * Action to start a timer.
+-     *
+-     * @param state - The current state.
+-     * @param payload - The payload containing the timerId and duration.
+-     */
+-    startTimer: (state, { payload }) => {
+-      const { timerId, duration } = payload;
+-      state[timerId] = {
+-        duration,
+-        startTime: performance.now(),
+-        isLocked: true,
+-      };
+-    },
+-    /**
+-     * Action to stop a timer.
+-     *
+-     * @param state - The current state.
+-     * @param payload - The payload containing the timerId.
+-     */
+-    stopTimer: (state, { payload }) => {
+-      const { timerId } = payload;
+-      state[timerId].isLocked = false;
+-    },
+-  },
+-  extraReducers: (builder) => {
+-    const HydrateState = createAction(HYDRATE);
+-
+-    builder
+-      // https://github.com/kirill-konshin/next-redux-wrapper#how-it-works
+-      // This allows for rehydration of the store from the server while on the client side.
+-      // This is needed for SSR and SSG.
+-      .addCase(HydrateState, (state: RootState, action: PayloadAction<any>) => {
+-        const stateDiff = diff(state, action.payload);
+-        const wasBumpedOnClient = stateDiff?.timers?.data;
+-
+-        // Keep existing state or use hydrated state
+-        const data = wasBumpedOnClient ? state.timers : action.payload.timers;
+-
+-        // Update state with new data
+-        return {
+-          ...state.timers,
+-          ...action.payload.timers,
+-          // keep existing state or use hydrated
+-          ...data,
+-        };
+-      });
+-  },
+-});
+-
+-/**
+- * Action creators generated for each case reducer function.
+- */
+-export const { startTimer, stopTimer } = timerSlice.actions;
+-
+-/**
+- * Selector to get the timers from the state.
+- *
+- * @param {RootState} state - The root state of the Redux store.
+- * @returns {TimerState['timers']} - All timers.
+- */
+-export const selectAllTimers = (state: RootState) => state.timers;
+-
+-/**
+- * Selector to get a specific timer from the state.
+- * @param timerId - The id of the timer to get.
+- * @returns {TimerState['timers'][timerId]} - the timer.
+- */
+-export const selectTimer =
+-  (timerId: number) =>
+-  (state: RootState): Timer =>
+-    state.timers[timerId];
+-
+-export default timerSlice;
+diff --git a/user/api.ts b/user/api.ts
+index 1df1a8d..adbaf9e 100755
+--- a/user/api.ts
++++ b/user/api.ts
+@@ -1,25 +1,11 @@
+ import clientApi from '../clientApi';
+ 
+-/**
+- * UserApi is an instance of the clientApi with predefined endpoints for user-related operations.
+- * It provides query and mutation functions to interact with the user API endpoints.
+- */
+ const UserApi = clientApi.injectEndpoints({
+   endpoints: (build) => ({
+-    /**
+-     * getUser is a query endpoint that retrieves user data.
+-     * It uses the GET method and specifies the URL as '/user'.
+-     * It also provides the 'UserApi' tag to enable cache invalidation.
+-     */
+     getUser: build.query({
+       query: () => '/user',
+       providesTags: ['UserApi'],
+     }),
+-    /**
+-     * userLogin is a mutation endpoint for user login.
+-     * It uses the POST method and specifies the URL as '/user/login'.
+-     * It invalidates the 'UserApi' tag to trigger cache invalidation.
+-     */
+     userLogin: build.mutation({
+       query: () => ({
+         url: `/user/login`,
+@@ -30,7 +16,6 @@ const UserApi = clientApi.injectEndpoints({
+   }),
+ });
+ 
+-// Extract the generated query and mutation hooks from UserApi
+ export const { useGetUserQuery, useUserLoginMutation } = UserApi;
+ 
+ export default UserApi;
+diff --git a/user/index.spec.ts b/user/index.spec.ts
+index fd0be1f..bc40d68 100755
+--- a/user/index.spec.ts
++++ b/user/index.spec.ts
+@@ -1,15 +1,12 @@
+-import { MyceliumObject } from '@/libs/types';
+-import userSlice, {
+-  IncreaseMycelium,
+-  DecreaseMycelium,
++import { Mycelium } from '@/libs/types';
++import {
++  AddToMycelium,
++  SubtractFromMycelium,
+   UserState,
++  userReducer,
+ } from '@/libs/redux/user';
+ 
+-const userReducer = userSlice.reducer;
+-
+-// Test case: should add Mycelium
+ it('should add Mycelium', () => {
+-  // Set up initial state
+   const initialState = {
+     data: {
+       mycelium: 0.0,
+@@ -18,30 +15,24 @@ it('should add Mycelium', () => {
+     errors: null,
+   } as UserState;
+ 
+-  // Define the payload for the IncreaseMycelium action
+-  const payload: MyceliumObject = {
++  const payload: Mycelium = {
+     mycelium: 1.1,
+     myceliumNotation: 0,
+   };
+ 
+-  // Define the expected result after applying the IncreaseMycelium action
+-  const expected: MyceliumObject = {
++  const expected: Mycelium = {
+     mycelium: 1.1,
+     myceliumNotation: 0,
+   };
+ 
+-  // Dispatch the IncreaseMycelium action
+-  const action = IncreaseMycelium(payload);
++  const action = AddToMycelium(payload);
+   const newState = userReducer(initialState, action);
+ 
+-  // Assert that the mycelium and myceliumNotation in the state have been updated correctly
+   expect(newState.data.mycelium).toEqual(expected.mycelium);
+   expect(newState.data.myceliumNotation).toEqual(expected.myceliumNotation);
+ });
+ 
+-// Test case: should subtract Mycelium
+ it('should subtract Mycelium', () => {
+-  // Set up initial state
+   const initialState = {
+     data: {
+       mycelium: 4,
+@@ -50,30 +41,24 @@ it('should subtract Mycelium', () => {
+     errors: null,
+   } as UserState;
+ 
+-  // Define the payload for the DecreaseMycelium action
+-  const payload: MyceliumObject = {
++  const payload: Mycelium = {
+     mycelium: 1.1,
+     myceliumNotation: 1,
+   };
+ 
+-  // Define the expected result after applying the DecreaseMycelium action
+-  const expected: MyceliumObject = {
++  const expected: Mycelium = {
+     mycelium: 2.9,
+     myceliumNotation: 1,
+   };
+ 
+-  // Dispatch the DecreaseMycelium action
+-  const action = DecreaseMycelium(payload);
++  const action = SubtractFromMycelium(payload);
+   const newState = userReducer(initialState, action);
+ 
+-  // Assert that the mycelium and myceliumNotation in the state have been updated correctly
+   expect(newState.data.mycelium).toEqual(expected.mycelium);
+   expect(newState.data.myceliumNotation).toEqual(expected.myceliumNotation);
+ });
+ 
+-// Test case: should not allow subtracting Mycelium to be less than or equal to zero
+ it('should not allow subtracting Mycelium to be less than or equal to zero', () => {
+-  // Set up initial state
+   const initialState = {
+     data: {
+       mycelium: 4,
+@@ -82,28 +67,25 @@ it('should not allow subtracting Mycelium to be less than or equal to zero', ()
+     errors: null,
+   } as UserState;
+ 
+-  // Define the payload for the DecreaseMycelium action
+-  const payload: MyceliumObject = {
++  const payload: Mycelium = {
+     mycelium: 5,
+     myceliumNotation: 1,
+   };
+ 
+-  // Define the expected result after applying the DecreaseMycelium action
+-  const expected1: MyceliumObject = {
++  const expected1: Mycelium = {
+     mycelium: 4,
+     myceliumNotation: 1,
+   };
+ 
+   const expected2 = ['Cannot subtract more mycelium than you have'];
+ 
+-  // Dispatch the DecreaseMycelium action
+-  const action = DecreaseMycelium(payload);
++  const action = SubtractFromMycelium(payload);
+   const newState = userReducer(initialState, action);
+ 
+-  // Assert that the mycelium and myceliumNotation in the state remain unchanged
++  // Ensure that the mycelium is not subtracted
+   expect(newState.data.mycelium).toEqual(expected1.mycelium);
+   expect(newState.data.myceliumNotation).toEqual(expected1.myceliumNotation);
+ 
+-  // Assert that the error is set correctly
++  // Check that the error is set
+   expect(newState.errors).toEqual(expected2);
+ });
+diff --git a/user/index.ts b/user/index.ts
+index 7545403..cac13f0 100755
+--- a/user/index.ts
++++ b/user/index.ts
+@@ -1,58 +1,32 @@
+ /* eslint-disable no-param-reassign */
+-import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+-import { diff } from 'jsondiffpatch';
++import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+ import { HYDRATE } from 'next-redux-wrapper';
+-// eslint-disable-next-line import/no-cycle
+-import { RootState } from '@/libs/redux';
++import { diff } from 'jsondiffpatch';
++import type { RootState } from '@/libs/redux';
+ import { z } from 'zod';
+-import { MyceliumObject, UserObject, UserObjectSchema } from '@/libs/types';
+-import {
+-  AddMycelium,
+-  GreaterThanOrEqualTo,
+-  SubtractMycelium,
+-} from '@/libs/myceliumMath';
++import { Mycelium, UserObjectSchema } from '@/libs/types';
++import { AddMycelium, SubtractMycelium } from '@/libs/myceliumMath';
+ import UserApi from './api';
+ 
+-/**
+- * Error message for when fetching UserApi data fails.
+- */
+-const FETCH_USER_FAILED = 'Error fetching UserApi data';
++const FETCH_USER_FAILED = 'Error fetching userApi data';
+ 
+-/**
+- * Schema for the UserState object.
+- */
+ const UserStateSchema = z.object({
+   data: UserObjectSchema,
+   errors: z.array(z.string()).nullable(),
+ });
+ 
+-/**
+- * Type representing the UserState.
+- */
+ export type UserState = z.infer<typeof UserStateSchema>;
+ 
+-/**
+- * Initial state for the userSlice.
+- */
+ const initialState = {
+-  data: {
+-    mycelium: 0.0,
+-    myceliumNotation: 0,
+-  },
++  data: {},
+   errors: null,
+ } as UserState;
+ 
+-/**
+- * Redux slice for managing user-related state.
+- */
+-const userSlice = createSlice({
++const slice = createSlice({
+   name: 'user',
+   initialState,
+   reducers: {
+-    /**
+-     * Action to increase mycelium in the user state.
+-     */
+-    IncreaseMycelium: (state, { payload }: { payload: MyceliumObject }) => {
++    AddToMycelium: (state, { payload }: { payload: Mycelium }) => {
+       const newMycelium = AddMycelium(
+         {
+           mycelium: state.data.mycelium,
+@@ -66,19 +40,12 @@ const userSlice = createSlice({
+ 
+       state.data = { ...state.data, ...newMycelium };
+     },
+-    /**
+-     * Action to decrease mycelium in the user state.
+-     */
+-    DecreaseMycelium: (state, { payload }: { payload: MyceliumObject }) => {
+-      const canSubtract = GreaterThanOrEqualTo(
+-        {
+-          mycelium: state.data.mycelium,
+-          myceliumNotation: state.data.myceliumNotation,
+-        },
+-        payload
+-      );
+-
+-      if (!canSubtract) {
++    SubtractFromMycelium: (state, { payload }: { payload: Mycelium }) => {
++      if (
++        payload.myceliumNotation > state.data.myceliumNotation ||
++        payload.mycelium >= state.data.mycelium
++      ) {
++        console.info('Cannot subtract more mycelium than you have');
+         state.errors = ['Cannot subtract more mycelium than you have'];
+         return;
+       }
+@@ -97,36 +64,22 @@ const userSlice = createSlice({
+       state.data = { ...state.data, ...newMycelium };
+     },
+   },
+-  extraReducers: (builder) => {
+-    const HydrateState = createAction(HYDRATE);
+-
+-    builder
+-      // https://github.com/kirill-konshin/next-redux-wrapper#how-it-works
+-      // This allows for rehydration of the store from the server while on the client side.
+-      // This is needed for SSR and SSG.
+-      .addCase(HydrateState, (state: RootState, action: PayloadAction<any>) => {
+-        const stateDiff = diff(state, action.payload);
+-        const wasBumpedOnClient = stateDiff?.user?.data;
+-
+-        // Keep existing state or use hydrated state
+-        const data = wasBumpedOnClient ? state.user : action.payload.user;
+-
+-        // Update state with new data
+-        return {
+-          ...state.user,
+-          ...action.payload.user,
+-          // keep existing state or use hydrated
+-          ...data,
+-        };
+-      })
++  extraReducers: (build) => {
++    build
+       .addMatcher(
+         UserApi.endpoints.getUser.matchFulfilled,
+         (state, { payload }) => {
++          // console.log({ getUserFulfilledAction: payload });
++
+           // Check if query response matches schema
+           const user = UserObjectSchema.safeParse(payload);
++          // console.log({ userAcceptedPayload: user });
++          // console.log({ userAcceptedSuccess: user.success });
+ 
+           // Handle schema check errors
+           if (!user.success) {
++            // console.log({ userAcceptedErrors: user.error.issues });
++            // error.forEach((err) => console.error(err));
+             state.errors = [
+               FETCH_USER_FAILED,
+               'UserAPI -> getUser typecheck failed',
+@@ -143,34 +96,42 @@ const userSlice = createSlice({
+         }
+       )
+       .addMatcher(UserApi.endpoints.getUser.matchRejected, (state) => {
++        // console.log({ getUserRejectedAction: payload });
+         state.errors = [FETCH_USER_FAILED, 'UserAPI -> getUser rejected'];
+       });
++
++    return {
++      // https://github.com/kirill-konshin/next-redux-wrapper#how-it-works
++      // This allows for rehydration of the store from the server
++      // while on the client side.
++      // This is needed for SSR and SSG.
++      [HYDRATE]: (state: RootState, action: PayloadAction<any>) => {
++        const stateDiff = diff(state, action.payload);
++        const wasBumpedOnClient = stateDiff?.user?.data;
++
++        // keep existing state or use hydrated state
++        const data = wasBumpedOnClient ? state.user : action.payload.user;
++
++        const newState = {
++          ...state.user,
++          ...action.payload.user,
++          // keep existing state or use hydrated
++          ...data,
++        };
++
++        return newState;
++      },
++    };
+   },
+ });
+ 
+-/**
+- * Action creators generated for each case reducer function.
+- */
+-export const { IncreaseMycelium, DecreaseMycelium } = userSlice.actions;
+-
+-/**
+- * Selector function to get the user data from the Redux store.
+- *
+- * @param {RootState} state - The root state of the Redux store.
+- * @returns {UserState['data']} - The user data.
+- */
+-export const selectUser = (state: RootState): UserObject =>
+-  state?.[userSlice.name].data;
+-
+-/**
+- * Selector function to get the mycelium object from the user data in the Redux store.
+- *
+- * @param {RootState} state - The root state of the Redux store.
+- * @returns {MyceliumObject} - The mycelium object containing mycelium and myceliumNotation.
+- */
+-export const selectUserMycelium = (state: RootState): MyceliumObject => ({
+-  mycelium: state?.[userSlice.name].data?.mycelium,
+-  myceliumNotation: state?.[userSlice.name].data?.myceliumNotation,
++export const { AddToMycelium, SubtractFromMycelium } = slice.actions;
++export const userReducer = slice.reducer;
++
++export const selectUser = (state: RootState) => state?.[slice.name].data;
++export const selectUserMycelium = (state: RootState): Mycelium => ({
++  mycelium: state?.[slice.name].data?.mycelium,
++  myceliumNotation: state?.[slice.name].data?.myceliumNotation,
+ });
+ 
+-export default userSlice;
++export default slice;
+diff --git a/userGuardians/api.ts b/userGuardians/api.ts
+old mode 100755
+new mode 100644
+diff --git a/userTerrains/api.ts b/userTerrains/api.ts
+old mode 100755
+new mode 100644
+index d326f7d..867b2bf
+--- a/userTerrains/api.ts
++++ b/userTerrains/api.ts
+@@ -1,13 +1,7 @@
+ import clientApi from '../clientApi';
+ 
+-/**
+- * UserTerrainsApi is an API object that provides endpoints for user terrains.
+- */
+ const UserTerrainsApi = clientApi.injectEndpoints({
+   endpoints: (build) => ({
+-    /**
+-     * Endpoint for getting user terrains.
+-     */
+     getUserTerrains: build.query({
+       query: () => `/user-terrain`,
+       providesTags: ['UserTerrainsApi'],
+@@ -15,9 +9,6 @@ const UserTerrainsApi = clientApi.injectEndpoints({
+   }),
+ });
+ 
+-/**
+- * Query hook for getting user terrains.
+- */
+ export const { useGetUserTerrainsQuery } = UserTerrainsApi;
+ 
+ export default UserTerrainsApi;
+diff --git a/userTerrains/buyTerrain.ts b/userTerrains/buyTerrain.ts
+deleted file mode 100755
+index 89c6b00..0000000
+--- a/userTerrains/buyTerrain.ts
++++ /dev/null
+@@ -1,128 +0,0 @@
+-import { AppThunkDispatch, RootState } from '@/libs/redux';
+-import { z } from 'zod';
+-// MyceliumObject is used in the HarvestTerrain jdoc
+-// eslint-disable-next-line no-unused-vars
+-import {
+-  MyceliumObject,
+-  MyceliumObjectSchema,
+-  TerrainObject,
+-  UserTerrainsObject,
+-} from '@/libs/types';
+-import { GreaterThanOrEqualTo } from '@/libs/myceliumMath';
+-import { DecreaseMycelium } from '@/libs/redux/user';
+-import { CalculateNextCost } from './calculateNextCost';
+-import { CalculateNextIncome } from './calculateNextIncome';
+-import {
+-  incrementNumberOwned,
+-  lockHarvest,
+-  unlockHarvest,
+-  addUserTerrain,
+-} from '.';
+-import { time } from 'console';
+-
+-/**
+- * Schema for the parameters required to harvest a terrain.
+- */
+-const buyTerrainSchema = z.object({
+-  terrainId: z.number(),
+-  cost: MyceliumObjectSchema.optional(),
+-  waitTime: z.number().optional(),
+-  income: MyceliumObjectSchema.optional(),
+-  coefficient: z.number().optional(),
+-  numberOwned: z.number().optional(),
+-});
+-
+-/**
+- * Type representing the parameters for harvesting a terrain.
+- */
+-type buyTerrainParams = z.infer<typeof buyTerrainSchema>;
+-
+-/**
+- * Redux action thunk to harvest a terrain.
+- * Harvesting means adding the terrain's income to the user's mycelium.
+- *
+- * @export
+- * @param {buyTerrainParams}
+- * @returns {Promise<void>}
+- */
+-const BuyTerrain =
+-  ({
+-    terrainId,
+-    cost,
+-    waitTime,
+-    income,
+-    coefficient,
+-    numberOwned,
+-  }: buyTerrainParams) =>
+-  async (dispatch: AppThunkDispatch, getState: RootState) => {
+-    const terrain: TerrainObject = getState().terrains.data.find(
+-      (terrain: TerrainObject) => terrain.id === terrainId
+-    );
+-
+-    console.info({ terrain });
+-
+-    const user = getState().user.data;
+-
+-    // Check and see if the user's myclium is greater than the cost of the growth purchase
+-    // If it is, subtract the cost of the growth purchase from the user's mycelium
+-    // If it is not, return an error message
+-    const canBuy = GreaterThanOrEqualTo(
+-      {
+-        mycelium: user.mycelium,
+-        myceliumNotation: user.myceliumNotation,
+-      },
+-      {
+-        mycelium: terrain.baseCost,
+-        myceliumNotation: terrain.baseCostNotation,
+-      }
+-    );
+-
+-    if (!canBuy) return;
+-
+-    // Subtract the cost of the growth purchase from the user's mycelium
+-    dispatch(
+-      DecreaseMycelium({
+-        mycelium: terrain.baseCost,
+-        myceliumNotation: terrain.baseCostNotation,
+-      })
+-    );
+-
+-    // Calculates the cost of the next Growth purchase
+-    const calculatedNextCost = CalculateNextCost({
+-      cost: {
+-        mycelium: terrain.baseCost,
+-        myceliumNotation: terrain.baseCostNotation,
+-      },
+-      coefficient: terrain.coefficient,
+-      numberOwned: 1,
+-    });
+-
+-    // Calculates the new mycelium production rate
+-    const calculatedIncome = CalculateNextIncome({
+-      income: {
+-        mycelium: terrain.income,
+-        myceliumNotation: terrain.incomeNotation,
+-      },
+-      coefficient: terrain.coefficient,
+-      numberOwned: 1,
+-    });
+-
+-    dispatch(
+-      addUserTerrain({
+-        userId: user.id,
+-        id: terrainId,
+-        terrainId: terrainId,
+-        currentIncome: calculatedIncome.mycelium,
+-        currentIncomeNotation: calculatedIncome.myceliumNotation,
+-        nextCost: calculatedNextCost.mycelium,
+-        nextCostNotation: calculatedNextCost.myceliumNotation,
+-        numberOwned: 1,
+-        isManaged: false,
+-        isContributionLocked: false,
+-        createdAt: '',
+-        updatedAt: '',
+-      })
+-    );
+-  };
+-
+-export default BuyTerrain;
+diff --git a/userTerrains/calculateNextCost.ts b/userTerrains/calculateNextCost.ts
+deleted file mode 100755
+index 1cc801d..0000000
+--- a/userTerrains/calculateNextCost.ts
++++ /dev/null
+@@ -1,53 +0,0 @@
+-import {
+-  ConvertToExponentialNotation,
+-  MultiplyMycelium,
+-} from '@/libs/myceliumMath';
+-import { MyceliumObject } from '@/libs/types';
+-
+-interface CalculateNextCostParams {
+-  cost: MyceliumObject;
+-  coefficient: number;
+-  numberOwned: number;
+-}
+-
+-/**
+- *
+- * Calculates the next cost of a terrain
+- * https://blog.kongregate.com/the-math-of-idle-games-part-i/
+- *
+- * @export
+- * @param {MyceliumObject} cost
+- * @param {number} coefficient
+- * @param {number} numberOwned
+- * @returns {MyceliumObject}
+- */
+-export const CalculateNextCost = ({
+-  cost,
+-  coefficient,
+-  numberOwned,
+-}: CalculateNextCostParams): MyceliumObject => {
+-  // Calculate the number owned times the coefficient
+-  const multiplier = Math.pow(coefficient, numberOwned);
+-
+-  // Multiply the cost by the multiplier
+-  let baseIncome = MultiplyMycelium(
+-    {
+-      mycelium: cost.mycelium,
+-      myceliumNotation: cost.myceliumNotation,
+-    },
+-    {
+-      mycelium: multiplier,
+-      myceliumNotation: 0,
+-    }
+-  );
+-
+-  // If the new base is greater than 10, adjust the exponent
+-  // let [base, exponent] = ConvertToExponentialNotation(baseIncome);
+-  // exponent += cost.myceliumNotation;
+-
+-  // return {
+-  //   mycelium: base,
+-  //   myceliumNotation: exponent,
+-  // };
+-  return baseIncome;
+-};
+diff --git a/userTerrains/calculateNextIncome.ts b/userTerrains/calculateNextIncome.ts
+deleted file mode 100755
+index c0d4e70..0000000
+--- a/userTerrains/calculateNextIncome.ts
++++ /dev/null
+@@ -1,59 +0,0 @@
+-import {
+-  ConvertToExponentialNotation,
+-  MultiplyMycelium,
+-} from '@/libs/myceliumMath';
+-import { MyceliumObject } from '@/libs/types';
+-
+-interface CalculateNextIncomeParams {
+-  income: MyceliumObject;
+-  coefficient: number;
+-  numberOwned: number;
+-}
+-
+-/**
+- * Calculates the mycelium production rate
+- * https://blog.kongregate.com/the-math-of-idle-games-part-i/
+- *
+- * @export
+- * @param {MyceliumObject} income
+- * @param {number} coefficient
+- * @param {number} numberOwned
+- * @returns {MyceliumObject}
+- */
+-export const CalculateNextIncome = ({
+-  income,
+-  coefficient,
+-  numberOwned,
+-}: CalculateNextIncomeParams): MyceliumObject => {
+-  // Calculate the production
+-  // const production = income.mycelium * numberOwned;
+-  let production = MultiplyMycelium(
+-    {
+-      mycelium: income.mycelium,
+-      myceliumNotation: income.myceliumNotation,
+-    },
+-    {
+-      mycelium: numberOwned,
+-      myceliumNotation: 0,
+-    }
+-  );
+-
+-  // Multiply the income by the multiplier
+-  // const baseIncome = production * coefficient;
+-  // Multiply the cost by the multiplier
+-  let baseIncome = MultiplyMycelium(production, {
+-    mycelium: coefficient,
+-    myceliumNotation: 0,
+-  });
+-
+-  // // If the new base is greater than 10, adjust the exponent
+-  // let [base, exponent] = ConvertToExponentialNotation(baseIncome);
+-  // exponent += income.myceliumNotation;
+-
+-  // return {
+-  //   mycelium: base,
+-  //   myceliumNotation: exponent,
+-  // };
+-
+-  return baseIncome;
+-};
+diff --git a/userTerrains/growTerrain.ts b/userTerrains/growTerrain.ts
+deleted file mode 100755
+index bbc88ac..0000000
+--- a/userTerrains/growTerrain.ts
++++ /dev/null
+@@ -1,138 +0,0 @@
+-import { AppThunkDispatch, RootState } from '@/libs/redux';
+-import { z } from 'zod';
+-// MyceliumObject is used in the HarvestTerrain jdoc
+-// eslint-disable-next-line no-unused-vars
+-import {
+-  MyceliumObject,
+-  MyceliumObjectSchema,
+-  TerrainObject,
+-  UserObject,
+-  UserTerrainsObject,
+-} from '@/libs/types';
+-import { GreaterThanOrEqualTo } from '@/libs/myceliumMath';
+-import { DecreaseMycelium } from '@/libs/redux/user';
+-import { CalculateNextCost } from './calculateNextCost';
+-import { CalculateNextIncome } from './calculateNextIncome';
+-import {
+-  incrementNumberOwned,
+-  lockHarvest,
+-  setNextCost,
+-  setCurrentIncome,
+-  unlockHarvest,
+-} from '.';
+-import { time } from 'console';
+-
+-/**
+- * Schema for the parameters required to harvest a terrain.
+- */
+-const growTerrainSchema = z.object({
+-  terrainId: z.number(),
+-  cost: MyceliumObjectSchema.optional(),
+-  waitTime: z.number().optional(),
+-  income: MyceliumObjectSchema.optional(),
+-  coefficient: z.number().optional(),
+-  numberOwned: z.number().optional(),
+-});
+-
+-/**
+- * Type representing the parameters for harvesting a terrain.
+- */
+-type GrowTerrainParams = z.infer<typeof growTerrainSchema>;
+-
+-/**
+- * Redux action thunk to harvest a terrain.
+- * Harvesting means adding the terrain's income to the user's mycelium.
+- *
+- * @export
+- * @param {GrowTerrainParams}
+- * @returns {Promise<void>}
+- */
+-const GrowTerrain =
+-  ({ terrainId }: GrowTerrainParams) =>
+-  async (dispatch: AppThunkDispatch, getState: RootState) => {
+-    // Lock terrain harvest
+-    dispatch(lockHarvest(terrainId));
+-
+-    const terrain: TerrainObject = getState().terrains.data.find(
+-      (terrain: TerrainObject) => terrain.id === terrainId
+-    );
+-    const userTerrain: UserTerrainsObject = getState().userTerrains.data.find(
+-      (userTerrain: UserTerrainsObject) => userTerrain.id === terrainId
+-    );
+-    const user: UserObject = getState().user.data;
+-
+-    // Sanity check
+-    if (!terrain || !userTerrain) {
+-      dispatch(unlockHarvest(terrainId));
+-      return;
+-    }
+-
+-    // Check and see if the user's myclium is greater than the cost of the growth purchase
+-    // If it is, subtract the cost of the growth purchase from the user's mycelium
+-    // If it is not, return an error message
+-    const canGrow = GreaterThanOrEqualTo(
+-      {
+-        mycelium: user.mycelium,
+-        myceliumNotation: user.myceliumNotation,
+-      },
+-      {
+-        mycelium: userTerrain.nextCost,
+-        myceliumNotation: userTerrain.nextCostNotation,
+-      }
+-    );
+-
+-    if (!canGrow) {
+-      dispatch(unlockHarvest(terrainId));
+-      return;
+-    }
+-
+-    // Subtract the cost of the growth purchase from the user's mycelium
+-    dispatch(
+-      DecreaseMycelium({
+-        mycelium: userTerrain.nextCost,
+-        myceliumNotation: userTerrain.nextCostNotation,
+-      })
+-    );
+-
+-    // Calculates the cost of the next Growth purchase
+-    const calculatedNextCost = CalculateNextCost({
+-      cost: {
+-        mycelium: userTerrain.nextCost,
+-        myceliumNotation: userTerrain.nextCostNotation,
+-      },
+-      coefficient: terrain.coefficient,
+-      numberOwned: userTerrain.numberOwned + 1,
+-    });
+-
+-    // Calculates the new mycelium production rate
+-    const calculatedIncome = CalculateNextIncome({
+-      income: {
+-        mycelium: userTerrain.currentIncome,
+-        myceliumNotation: userTerrain.currentIncomeNotation,
+-      },
+-      coefficient: terrain.coefficient,
+-      numberOwned: userTerrain.numberOwned + 1,
+-    });
+-
+-    // Increment number of terrain owned
+-    dispatch(incrementNumberOwned(terrainId));
+-
+-    // Set the new cost and income
+-    // dispatch(setNextCost({ terrainId, ...calculatedNextCost }));
+-    // dispatch(setCurrentIncome({ terrainId, ...calculatedIncome }));
+-
+-    // switched the calculations to see how it affects the speed of the game
+-    dispatch(setNextCost({ terrainId, ...calculatedIncome }));
+-    dispatch(setCurrentIncome({ terrainId, ...calculatedNextCost }));
+-
+-    // not sure if this is needed
+-    // dispatch(aggregateTheIncome(name));
+-    // if (numberOwned === 0) {
+-    //   dispatch(unlockIndustry(name));
+-    // }
+-
+-    // Unlock terrain harvest
+-    dispatch(unlockHarvest(terrainId));
+-  };
+-
+-export default GrowTerrain;
+diff --git a/userTerrains/harvestTerrain.ts b/userTerrains/harvestTerrain.ts
+deleted file mode 100755
+index 53d18e5..0000000
+--- a/userTerrains/harvestTerrain.ts
++++ /dev/null
+@@ -1,52 +0,0 @@
+-import { AppThunkDispatch } from '@/libs/redux';
+-import { startTimer, stopTimer } from '@/libs/redux/timers';
+-import { IncreaseMycelium } from '@/libs/redux/user';
+-import { z } from 'zod';
+-// MyceliumObject is used in the HarvestTerrain jdoc
+-// eslint-disable-next-line no-unused-vars
+-import { MyceliumObject, MyceliumObjectSchema } from '@/libs/types';
+-
+-/**
+- * Schema for the parameters required to harvest a terrain.
+- */
+-const harvestTerrainSchema = z.object({
+-  terrainId: z.number(),
+-  income: MyceliumObjectSchema,
+-  waitTime: z.number(),
+-});
+-
+-/**
+- * Type representing the parameters for harvesting a terrain.
+- */
+-type harvestTerrainParams = z.infer<typeof harvestTerrainSchema>;
+-
+-/**
+- * Redux action thunk to harvest a terrain.
+- * Harvesting means adding the terrain's income to the user's mycelium.
+- *
+- * @export
+- * @param {number} terrainId - The ID of the terrain to be harvested.
+- * @param {MyceliumObject} income - The income object containing mycelium details.
+- * @param {number} waitTime - The wait time before unlocking the terrain harvest.
+- */
+-const HarvestTerrain =
+-  ({ terrainId, income, waitTime }: harvestTerrainParams) =>
+-  async (dispatch: AppThunkDispatch) => {
+-    // Lock terrain harvest
+-    dispatch(startTimer({ timerId: terrainId, duration: waitTime }));
+-
+-    // Dispatch increase mycelium by terrain income
+-    dispatch(
+-      IncreaseMycelium({
+-        mycelium: income.mycelium,
+-        myceliumNotation: income.myceliumNotation,
+-      })
+-    );
+-
+-    // Unlock terrain harvest after the specified wait time
+-    setTimeout(() => {
+-      dispatch(stopTimer({ timerId: terrainId }));
+-    }, waitTime + 200); // Adds 200ms to wait time to account for timer inaccuracies
+-  };
+-
+-export default HarvestTerrain;
+diff --git a/userTerrains/index.ts b/userTerrains/index.ts
+deleted file mode 100755
+index 01406ce..0000000
+--- a/userTerrains/index.ts
++++ /dev/null
+@@ -1,202 +0,0 @@
+-/* eslint-disable no-param-reassign */
+-import {
+-  Action,
+-  createAction,
+-  createSlice,
+-  PayloadAction,
+-} from '@reduxjs/toolkit';
+-import { HYDRATE } from 'next-redux-wrapper';
+-import { diff } from 'jsondiffpatch';
+-import { z } from 'zod';
+-import type { RootState } from '@/libs/redux';
+-import {
+-  MyceliumObject,
+-  UserTerrainsObject,
+-  UserTerrainsObjectList,
+-  UserTerrainsObjectListSchema,
+-} from '@/libs/types';
+-import UserTerrainsApi from '@/libs/redux/userTerrains/api';
+-import { GetIndexById } from '@/libs/redux/userTerrains/utils';
+-
+-/**
+- * Error message for when fetching UserTerrainsApi data fails.
+- */
+-const FETCH_USER_TERRAINS_FAILED = 'Error fetching UserTerrainsApi data';
+-
+-/**
+- * Schema for the UserTerrainState object.
+- */
+-const UserTerrainStateSchema = z.object({
+-  data: UserTerrainsObjectListSchema,
+-  errors: z.array(z.string()).nullable(),
+-});
+-
+-/**
+- * Type representing the UserTerrainState.
+- */
+-export type UserTerrainState = z.infer<typeof UserTerrainStateSchema>;
+-
+-type PayloadUserTerrainMycelium = {
+-  terrainId: number;
+-  mycelium: number;
+-  myceliumNotation: number;
+-};
+-
+-/**
+- * Initial state for the userTerrainsSlice.
+- */
+-const initialState = {
+-  data: [],
+-  errors: null,
+-} as UserTerrainState;
+-
+-/**
+- * userTerrainsSlice represents a Redux slice for managing user terrains.
+- */
+-const userTerrainsSlice = createSlice({
+-  name: 'userTerrains',
+-  initialState,
+-  reducers: {
+-    /**
+-     * Action for locking a single terrain harvest.
+-     */
+-    lockHarvest: (state, action: PayloadAction<number>) => {
+-      const index = GetIndexById(state.data, action.payload);
+-      state.data[index].isContributionLocked = true;
+-    },
+-    /**
+-     * Action for unlocking a single terrain harvest.
+-     */
+-    unlockHarvest: (state, action: PayloadAction<number>) => {
+-      const index = GetIndexById(state.data, action.payload);
+-      state.data[index].isContributionLocked = false;
+-    },
+-    /**
+-     * Action for incrementing the number of a single terrain type owned.
+-     */
+-    incrementNumberOwned: (state, action: PayloadAction<number>) => {
+-      const index = GetIndexById(state.data, action.payload);
+-      state.data[index].numberOwned += 1;
+-    },
+-    /**
+-     * Action for setting the next cost of a single terrain type.
+-     */
+-    setNextCost: (state, action: PayloadAction<PayloadUserTerrainMycelium>) => {
+-      const index = GetIndexById(state.data, action.payload.terrainId);
+-      state.data[index].nextCost = action.payload.mycelium;
+-      state.data[index].nextCostNotation = action.payload.myceliumNotation;
+-    },
+-    /**
+-     * Action for setting the current income of a single terrain type.
+-     */
+-    setCurrentIncome: (
+-      state,
+-      action: PayloadAction<PayloadUserTerrainMycelium>
+-    ) => {
+-      const index = GetIndexById(state.data, action.payload.terrainId);
+-      state.data[index].currentIncome = action.payload.mycelium;
+-      state.data[index].currentIncomeNotation = action.payload.myceliumNotation;
+-    },
+-    /**
+-     * Action for adding a single terrain type to the user's list of terrains.
+-     */
+-    addUserTerrain: (state, action: PayloadAction<UserTerrainsObject>) => {
+-      state.data.push(action.payload);
+-    },
+-  },
+-  extraReducers: (builder) => {
+-    const HydrateState = createAction(HYDRATE);
+-
+-    builder
+-      // https://github.com/kirill-konshin/next-redux-wrapper#how-it-works
+-      // This allows for rehydration of the store from the server
+-      // while on the client side.
+-      // This is needed for SSR and SSG.
+-      .addCase(HydrateState, (state: RootState, action: PayloadAction<any>) => {
+-        const stateDiff = diff(state, action.payload);
+-        const wasBumpedOnClient = stateDiff?.userTerrains?.data;
+-
+-        // keep existing state or use hydrated state
+-        const data = wasBumpedOnClient
+-          ? state.userTerrains
+-          : action.payload.userTerrains;
+-
+-        // Update state with new data
+-        return {
+-          ...state.userTerrains,
+-          ...action.payload.userTerrains,
+-          // keep existing state or use hydrated
+-          ...data,
+-        };
+-      })
+-      .addMatcher(
+-        UserTerrainsApi.endpoints.getUserTerrains.matchFulfilled,
+-        (state, { payload }) => {
+-          // Check if query response matches schema
+-          const userTerrains = UserTerrainsObjectListSchema.safeParse(payload);
+-
+-          // Handle schema check errors
+-          if (!userTerrains.success) {
+-            state.errors = [
+-              FETCH_USER_TERRAINS_FAILED,
+-              'UserTerrainsApi -> getUserTerrains typecheck failed',
+-              ...userTerrains.error.issues.map(
+-                (issue) => `${issue.path[0]}: ${issue.message}`
+-              ),
+-            ];
+-            return;
+-          }
+-
+-          // Handle schema check success; update state
+-          state.data = [...state.data, ...userTerrains.data];
+-          state.errors = null;
+-        }
+-      )
+-      .addMatcher(
+-        UserTerrainsApi.endpoints.getUserTerrains.matchRejected,
+-        (state) => {
+-          state.errors = [
+-            FETCH_USER_TERRAINS_FAILED,
+-            'UserTerrainsApi -> getUserTerrains rejected',
+-          ];
+-        }
+-      );
+-  },
+-});
+-
+-/**
+- * Action creators generated for each case reducer function.
+- */
+-export const {
+-  incrementNumberOwned,
+-  lockHarvest,
+-  unlockHarvest,
+-  setNextCost,
+-  setCurrentIncome,
+-  addUserTerrain,
+-} = userTerrainsSlice.actions;
+-
+-/**
+- * Selects the UserTerrainsObjectList from the state.
+- *
+- * @param state - The root state.
+- * @returns The UserTerrainsObjectList.
+- */
+-export const selectAllUserTerrains = (state: RootState) =>
+-  state?.[userTerrainsSlice.name].data as UserTerrainsObjectList;
+-
+-/**
+- * Selects a UserTerrainsObject from the state by id.
+- *
+- * @param id - The id of the UserTerrainsObject to select.
+- * @param state - The root state.
+- * @returns The UserTerrainsObject.
+- */
+-export const selectUserTerrain =
+-  (terrainId: number) =>
+-  (state: RootState): UserTerrainsObject =>
+-    state?.[userTerrainsSlice.name].data[
+-      GetIndexById(state?.[userTerrainsSlice.name].data, terrainId)
+-    ];
+-
+-export default userTerrainsSlice;
+diff --git a/userTerrains/utils.ts b/userTerrains/utils.ts
+deleted file mode 100755
+index a616127..0000000
+--- a/userTerrains/utils.ts
++++ /dev/null
+@@ -1,11 +0,0 @@
+-/* eslint-disable import/prefer-default-export */
+-import { UserTerrainsObjectList } from "@/libs/types";
+-
+-/**
+- * Gets a terrain by id from a provided array of terrains
+- *
+- * @param {UserTerrainsObjectList} arr
+- * @param {number} terrainId
+- */
+-export const GetIndexById = (arr: UserTerrainsObjectList, terrainId: number) =>
+-  arr.findIndex((item) => item.terrainId === terrainId);

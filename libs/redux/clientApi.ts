@@ -1,5 +1,11 @@
 import { createApi, fetchBaseQuery, retry } from '@reduxjs/toolkit/query/react';
 import { HYDRATE } from 'next-redux-wrapper';
+import { Action, PayloadAction } from '@reduxjs/toolkit';
+import type { RootState } from './index';
+
+function isHydrateAction(action: Action): action is PayloadAction<RootState> {
+  return action.type === HYDRATE;
+}
 
 // Create our baseQuery instance
 const baseQuery = fetchBaseQuery({
@@ -43,8 +49,11 @@ const clientApi = createApi({
 
   // Rehydrates the api store from the server
   // eslint-disable-next-line consistent-return
-  extractRehydrationInfo(action, { reducerPath }) {
-    if (action.type === HYDRATE) {
+  extractRehydrationInfo(
+    action: Action,
+    { reducerPath }: { reducerPath: string }
+  ) {
+    if (isHydrateAction(action)) {
       return action.payload[reducerPath];
     }
   },
