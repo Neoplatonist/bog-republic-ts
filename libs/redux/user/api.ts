@@ -1,7 +1,8 @@
+import { EndpointBuilder } from '@reduxjs/toolkit/query';
 import clientApi from '../clientApi';
 
 const UserApi = clientApi.injectEndpoints({
-  endpoints: (build) => ({
+  endpoints: (build: EndpointBuilder<any, any, any>) => ({
     getUser: build.query({
       query: () => '/user',
       providesTags: ['UserApi'],

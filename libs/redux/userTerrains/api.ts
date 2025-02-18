@@ -1,7 +1,8 @@
+import { EndpointBuilder } from '@reduxjs/toolkit/query';
 import clientApi from '../clientApi';
 
 const UserTerrainsApi = clientApi.injectEndpoints({
-  endpoints: (build) => ({
+  endpoints: (build: EndpointBuilder<any, any, any>) => ({
     getUserTerrains: build.query({
       query: () => `/user-terrain`,
       providesTags: ['UserTerrainsApi'],

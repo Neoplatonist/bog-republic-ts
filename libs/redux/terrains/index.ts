@@ -6,6 +6,11 @@ import type { RootState } from '@/libs/redux';
 import { z } from 'zod';
 import { TerrainObjectListSchema } from '@/libs/types';
 
+type HydrateAction = {
+  type: typeof HYDRATE;
+  payload: RootState;
+};
+
 const TerrainStateSchema = z.object({
   data: TerrainObjectListSchema,
   errors: z.array(z.string()).nullable(),
@@ -50,27 +55,25 @@ const slice = createSlice({
       }
     },
   },
-  extraReducers: {
+  extraReducers: (builder) => {
     // https://github.com/kirill-konshin/next-redux-wrapper#how-it-works
     // This allows for rehydration of the store from the server
     // while on the client side.
     // This is needed for SSR and SSG.
-    [HYDRATE]: (state: RootState, action: PayloadAction<any>) => {
+    builder.addCase(HYDRATE, (state: TerrainState, action: HydrateAction) => {
       const stateDiff = diff(state, action.payload);
       const wasBumpedOnClient = stateDiff?.terrains?.data;
 
-      // keep existing state or use hydrated state
-      const data = wasBumpedOnClient ? state.terrains : action.payload.terrains;
+      if (!action.payload.terrains) {
+        return state;
+      }
 
-      const newState = {
-        ...state.terrains,
+      return {
+        ...state,
         ...action.payload.terrains,
-        // keep existing state or use hydrated
-        ...data,
-      };
-
-      return newState;
-    },
+        data: wasBumpedOnClient ? state.data : action.payload.terrains.data,
+      } as TerrainState;
+    });
   },
 });
 
