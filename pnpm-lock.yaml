@@ -48,9 +48,6 @@ importers:
       jose:
         specifier: ^5.9.6
         version: 5.9.6
-      jsondiffpatch:
-        specifier: ^0.4.1
-        version: 0.4.1
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -60,9 +57,6 @@ importers:
       next-auth:
         specifier: 5.0.0-beta.25
         version: 5.0.0-beta.25(next@15.1.6(@babel/core@7.21.8)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)
-      next-redux-wrapper:
-        specifier: ^7.0.5
-        version: 7.0.5(next@15.1.6(@babel/core@7.21.8)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react-redux@8.0.5(@types/react-dom@19.0.2(@types/react@19.0.3))(@types/react@19.0.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(redux@5.0.1))(react@19.0.0)
       plaiceholder:
         specifier: ^3.0.0
         version: 3.0.0(sharp@0.33.5)
@@ -81,6 +75,9 @@ importers:
       react-redux:
         specifier: ^8.0.5
         version: 8.0.5(@types/react-dom@19.0.2(@types/react@19.0.3))(@types/react@19.0.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(redux@5.0.1)
+      redux-remember:
+        specifier: ^5.2.0
+        version: 5.2.0(redux@5.0.1)
       typescript-cookie:
         specifier: ^1.0.6
         version: 1.0.6
@@ -1814,9 +1811,6 @@ packages:
   didyoumean@1.2.2:
     resolution: {integrity: sha512-gxtyfqMg7GKyhQmb056K7M3xszy/myH8w+B4RT+QXBQsvAOdc3XymqDDPHx1BgPgsdAA5SIifona89YtRATDzw==}
 
-  diff-match-patch@1.0.5:
-    resolution: {integrity: sha512-IayShXAgj/QMXgB0IWmKx+rOPuGMhqm5w6jvFxmVenXKIzRqTAAsbBPT3kWQeGANj3jGgvcvv4yK6SxqYmikgw==}
-
   diff-sequences@29.4.3:
     resolution: {integrity: sha512-ofrBgwpPhCD85kMKtE9RYFFq6OC1A89oW2vvgWZNCwxrUpRUILopY7lsYyMDSjc8g6U6aiO0Qubg6r4Wgt5ZnA==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -2805,12 +2799,6 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  jsondiffpatch@0.4.1:
-    resolution: {integrity: sha512-t0etAxTUk1w5MYdNOkZBZ8rvYYN5iL+2dHCCx/DpkFm/bW28M6y5nUS83D4XdZiHy35Fpaw6LBb+F88fHZnVCw==}
-    engines: {node: '>=8.17.0'}
-    hasBin: true
-    bundledDependencies: []
-
   jsonfile@6.1.0:
     resolution: {integrity: sha512-5dgndWOriYSm5cnYaJNhalLNDKOqFwyDB/rr1E9ZsGciGvKPs8R2xYGCacuf3z6K1YKDz182fd+fY3cn3pMqXQ==}
 
@@ -3040,13 +3028,6 @@ packages:
         optional: true
       nodemailer:
         optional: true
-
-  next-redux-wrapper@7.0.5:
-    resolution: {integrity: sha512-UFXdAWG5i+GFT8+Hoqpx3GArkPh34fVWF9YoA2VSHlBzsrPtnRd7NWM6FNSYUennpommTpWJ09mu+r/1UxyIkg==}
-    peerDependencies:
-      next: '>=10.0.3'
-      react: '*'
-      react-redux: '*'
 
   next@15.1.6:
     resolution: {integrity: sha512-Hch4wzbaX0vKQtalpXvUiw5sYivBy4cm5rzUKrBnUB/y436LGrvOUqYvlSeNVCWFO/770gDlltR9gqZH62ct4Q==}
@@ -3457,6 +3438,11 @@ packages:
   redent@3.0.0:
     resolution: {integrity: sha512-6tDA8g98We0zd0GvVeMT9arEOnTw9qM03L9cJXaCjrip1OO764RDBLBfrB4cwzNGDj5OA5ioymC9GkizgWJDUg==}
     engines: {node: '>=8'}
+
+  redux-remember@5.2.0:
+    resolution: {integrity: sha512-HqXx9V+DKzgBzpiIT5dyiXZgiiSB6zaMs4sIscwQ+Z0zVwUvJh20mqPEQWo4wbthuo5+5jGrS7Yfvv4HyOuAFw==}
+    peerDependencies:
+      redux: '>=5.0.0'
 
   redux-thunk@3.1.0:
     resolution: {integrity: sha512-NW2r5T6ksUKXCabzhL9z+h206HQw/NJkcLm1GPImRQ8IzfXwRGqjVhKJGauHirT0DAuyy6hjdnMZaRoAcy0Klw==}
@@ -6120,8 +6106,6 @@ snapshots:
 
   didyoumean@1.2.2: {}
 
-  diff-match-patch@1.0.5: {}
-
   diff-sequences@29.4.3: {}
 
   diff@4.0.2: {}
@@ -7499,11 +7483,6 @@ snapshots:
 
   json5@2.2.3: {}
 
-  jsondiffpatch@0.4.1:
-    dependencies:
-      chalk: 2.4.2
-      diff-match-patch: 1.0.5
-
   jsonfile@6.1.0:
     dependencies:
       universalify: 2.0.0
@@ -7694,12 +7673,6 @@ snapshots:
       '@auth/core': 0.37.2
       next: 15.1.6(@babel/core@7.21.8)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       react: 19.0.0
-
-  next-redux-wrapper@7.0.5(next@15.1.6(@babel/core@7.21.8)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react-redux@8.0.5(@types/react-dom@19.0.2(@types/react@19.0.3))(@types/react@19.0.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(redux@5.0.1))(react@19.0.0):
-    dependencies:
-      next: 15.1.6(@babel/core@7.21.8)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
-      react: 19.0.0
-      react-redux: 8.0.5(@types/react-dom@19.0.2(@types/react@19.0.3))(@types/react@19.0.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(redux@5.0.1)
 
   next@15.1.6(@babel/core@7.21.8)(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
     dependencies:
@@ -8112,6 +8085,10 @@ snapshots:
     dependencies:
       indent-string: 4.0.0
       strip-indent: 3.0.0
+
+  redux-remember@5.2.0(redux@5.0.1):
+    dependencies:
+      redux: 5.0.1
 
   redux-thunk@3.1.0(redux@5.0.1):
     dependencies:

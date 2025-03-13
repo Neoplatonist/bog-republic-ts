@@ -1,11 +1,4 @@
 import { createApi, fetchBaseQuery, retry } from '@reduxjs/toolkit/query/react';
-import { HYDRATE } from 'next-redux-wrapper';
-import { Action, PayloadAction } from '@reduxjs/toolkit';
-import type { RootState } from './index';
-
-function isHydrateAction(action: Action): action is PayloadAction<RootState> {
-  return action.type === HYDRATE;
-}
 
 // Create our baseQuery instance
 const baseQuery = fetchBaseQuery({
@@ -14,7 +7,8 @@ const baseQuery = fetchBaseQuery({
   prepareHeaders: (headers, { getState }) => {
     // Get the token from local storage
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('idToken');
+      const hankoUser = localStorage.getItem('hankoUser');
+      const token = hankoUser ? JSON.parse(hankoUser).jwt : null;
       if (token) headers.set('authorization', `Bearer ${token}`);
     }
 
@@ -39,6 +33,10 @@ const clientApi = createApi({
    * for any tags that would be provided by injected endpoints
    */
   tagTypes: ['TerrainsApi', 'UserApi', 'UserGuardiansApi', 'UserTerrainsApi'],
+  keepUnusedDataFor: 60 * 5,
+  refetchOnFocus: false,
+  refetchOnReconnect: true,
+  refetchOnMountOrArgChange: 300,
   /**
    * This api has endpoints injected from other files,
    * which is why no endpoints are defined here.
@@ -46,17 +44,6 @@ const clientApi = createApi({
    * they could be included here instead.
    */
   endpoints: () => ({}),
-
-  // Rehydrates the api store from the server
-  // eslint-disable-next-line consistent-return
-  extractRehydrationInfo(
-    action: Action,
-    { reducerPath }: { reducerPath: string }
-  ) {
-    if (isHydrateAction(action)) {
-      return action.payload[reducerPath];
-    }
-  },
 });
 
 export default clientApi;

@@ -1,7 +1,5 @@
 /* eslint-disable no-param-reassign */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { HYDRATE } from 'next-redux-wrapper';
-import { diff } from 'jsondiffpatch';
 import type { RootState } from '@/libs/redux';
 import { z } from 'zod';
 import { Mycelium, UserObjectSchema } from '@/libs/types';
@@ -11,12 +9,6 @@ import UserApi from './api';
 // Constants
 const FETCH_USER_FAILED = 'Error fetching userApi data';
 const INSUFFICIENT_MYCELIUM = 'Cannot subtract more mycelium than you have';
-
-// Types
-type HydrateAction = {
-  type: typeof HYDRATE;
-  payload: RootState;
-};
 
 // Schemas
 const UserStateSchema = z.object({
@@ -34,7 +26,7 @@ const initialState = {
 
 // Slice
 const slice = createSlice({
-  name: 'user',
+  name: 'user' as const, // type the name as a constant
   initialState,
   reducers: {
     AddToMycelium: (state, { payload }: { payload: Mycelium }) => {
@@ -47,7 +39,6 @@ const slice = createSlice({
       );
       state.data = { ...state.data, ...newMycelium };
     },
-
     SubtractFromMycelium: (state, { payload }: { payload: Mycelium }) => {
       if (
         payload.myceliumNotation > state.data.myceliumNotation ||
@@ -66,27 +57,31 @@ const slice = createSlice({
       );
       state.data = { ...state.data, ...newMycelium };
     },
+    hydrateUser: (state, { payload }: PayloadAction<UserState>) => {
+      if (payload?.data) {
+        const userData = UserObjectSchema.safeParse(payload.data);
+
+        if (userData.success) {
+          state.data = userData.data;
+          state.errors = null;
+        } else {
+          state.errors = [
+            'Hydrate User failed',
+            ...userData.error.issues.map(
+              (issue) => `${issue.path[0]}: ${issue.message}`
+            ),
+          ];
+        }
+      }
+
+      if (payload?.errors) {
+        state.errors = payload.errors;
+      }
+    },
   },
 
   extraReducers: (builder) => {
     builder
-      // https://github.com/kirill-konshin/next-redux-wrapper#how-it-works
-      // This allows for rehydration of the store from the server
-      // while on the client side.
-      // This is needed for SSR and SSG.
-      .addCase(HYDRATE, (state: UserState, action: HydrateAction) => {
-        const stateDiff = diff(state, action.payload);
-        const wasBumpedOnClient = stateDiff?.user?.data;
-
-        if (!action.payload.user) return state;
-
-        return {
-          ...state,
-          ...action.payload.user,
-          data: wasBumpedOnClient ? state.data : action.payload.user.data,
-        } as UserState;
-      })
-
       // Handle successful user fetch
       .addMatcher(
         UserApi.endpoints.getUser.matchFulfilled,
@@ -126,10 +121,10 @@ export const { AddToMycelium, SubtractFromMycelium } = slice.actions;
 export const userReducer = slice.reducer;
 
 // Selectors
-export const selectUser = (state: RootState) => state?.[slice.name].data;
+export const selectUser = (state: RootState) => state.user.data;
 export const selectUserMycelium = (state: RootState): Mycelium => ({
-  mycelium: state?.[slice.name].data?.mycelium,
-  myceliumNotation: state?.[slice.name].data?.myceliumNotation,
+  mycelium: state.user.data?.mycelium,
+  myceliumNotation: state.user.data?.myceliumNotation,
 });
 
 export default slice;

@@ -1,58 +1,61 @@
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import {
-  AnyAction,
+  Action,
   configureStore,
-  ConfigureStoreOptions,
   ThunkDispatch,
+  StoreEnhancer,
 } from '@reduxjs/toolkit';
-import { Context, createWrapper } from 'next-redux-wrapper';
+import { setupListeners } from '@reduxjs/toolkit/query';
+import { rememberEnhancer, rememberReducer } from 'redux-remember';
 
 // import reducers
 import terrainsReducer from './terrains';
 import userReducer from './user';
+import userTerrainsReducer from './userTerrains';
 import clientApi from './clientApi';
 
 const isDev = process.env.NODE_ENV === 'development';
+const rememberedKeys = [clientApi.reducerPath];
 
-export const createStore: any = (
-  options?: ConfigureStoreOptions['preloadedState'] | undefined
-) =>
-  configureStore({
-    reducer: {
-      // Reducers
-      [terrainsReducer.name]: terrainsReducer.reducer,
-      [userReducer.name]: userReducer.reducer,
+export const store = configureStore({
+  reducer: rememberReducer({
+    // Reducers
+    [userReducer.name]: userReducer.reducer,
+    [terrainsReducer.name]: terrainsReducer.reducer,
+    [userTerrainsReducer.name]: userTerrainsReducer.reducer,
 
-      // Query and Mutations
-      [clientApi.reducerPath]: clientApi.reducer,
-    },
-    middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(clientApi.middleware),
-    devTools: isDev,
-    ...options,
-  });
+    // Query and Mutations
+    [clientApi.reducerPath]: clientApi.reducer,
+  }),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(clientApi.middleware),
+  devTools: isDev,
+  enhancers: (defaultEnhancers) => {
+    // Only add the enhancer in browser environments
+    if (typeof window !== 'undefined') {
+      const enhancer = rememberEnhancer(window.localStorage, rememberedKeys, {
+        prefix: 'app-state-',
+      });
 
-// create store to make the
-// dispatch, thunk dispatch, and useSelector types avaliable
-export const store = createStore();
+      return defaultEnhancers().concat(enhancer as StoreEnhancer);
+    }
 
-// Created a makeStore function for next-redux-wrapper
-// eslint-disable-next-line no-unused-vars
-export const makeStore = (context: Context) => store;
-
-// assembled next-redux-wrapper
-export const storeWithWrapper = createWrapper(makeStore, {
-  debug: isDev,
+    return defaultEnhancers();
+  },
 });
+
+setupListeners(store.dispatch);
 
 // Selector with type
 export type RootState = ReturnType<typeof store.getState>;
-export const useTypedSelector: TypedUseSelectorHook<any> = useSelector;
+export const useTypedSelector: TypedUseSelectorHook<RootState> = useSelector;
 
 // Dispatch with type
 export type AppDispatch = typeof store.dispatch;
 export const useAppDispatch: () => AppDispatch = useDispatch;
 
 // ThunkDispatch with Type
-export type AppThunkDispatch = ThunkDispatch<RootState, any, AnyAction>;
-export const useAppThunkDispatch: () => AppThunkDispatch = useDispatch;
+export type AppThunkDispatch = ThunkDispatch<RootState, any, Action>;
+export const useAppThunkDispatch: () => ReturnType<
+  typeof useDispatch<AppThunkDispatch>
+> = useDispatch;

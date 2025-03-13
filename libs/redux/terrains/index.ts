@@ -1,15 +1,9 @@
 /* eslint-disable no-param-reassign */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { HYDRATE } from 'next-redux-wrapper';
-import { diff } from 'jsondiffpatch';
 import type { RootState } from '@/libs/redux';
 import { z } from 'zod';
 import { TerrainObjectListSchema } from '@/libs/types';
-
-type HydrateAction = {
-  type: typeof HYDRATE;
-  payload: RootState;
-};
+import TerrainsApi from './api';
 
 const TerrainStateSchema = z.object({
   data: TerrainObjectListSchema,
@@ -24,7 +18,7 @@ const initialState = {
 } as TerrainState;
 
 const slice = createSlice({
-  name: 'terrains',
+  name: 'terrains' as const, // type the name as a constant
   initialState,
   reducers: {
     setTerrains: (state, { payload }) => {
@@ -54,32 +48,48 @@ const slice = createSlice({
         state.errors = [...state.errors, payload];
       }
     },
-  },
-  extraReducers: (builder) => {
-    // https://github.com/kirill-konshin/next-redux-wrapper#how-it-works
-    // This allows for rehydration of the store from the server
-    // while on the client side.
-    // This is needed for SSR and SSG.
-    builder.addCase(HYDRATE, (state: TerrainState, action: HydrateAction) => {
-      const stateDiff = diff(state, action.payload);
-      const wasBumpedOnClient = stateDiff?.terrains?.data;
-
-      if (!action.payload.terrains) {
-        return state;
+    hydrateTerrains: (state, { payload }: PayloadAction<TerrainState>) => {
+      if (payload?.data?.length > 0) {
+        state.data = payload.data;
+        state.errors = null;
+      } else {
+        state.errors = ['Hydrate Terrains failed'];
       }
 
-      return {
-        ...state,
-        ...action.payload.terrains,
-        data: wasBumpedOnClient ? state.data : action.payload.terrains.data,
-      } as TerrainState;
-    });
+      if (payload?.errors) {
+        state.errors = payload.errors;
+      }
+    },
+  },
+  extraReducers: (builder) => {
+    builder.addMatcher(
+      // Handle successful terrains fetch
+      TerrainsApi.endpoints.getTerrains.matchFulfilled,
+      (state, action) => {
+        const terrainsData = TerrainObjectListSchema.safeParse(action.payload);
+
+        if (!terrainsData.success) {
+          state.data = [];
+          state.errors = [
+            ...terrainsData.error.issues.map(
+              (issue) =>
+                `TerrainAPI -> getTerrains typecheck failed -> ${issue.path[0]}: ${issue.message}`
+            ),
+          ];
+        }
+
+        if (terrainsData.success) {
+          state.data = terrainsData.data;
+          state.errors = null;
+        }
+      }
+    );
   },
 });
 
-export const { setTerrains, setTerrainError } = slice.actions;
-export const selectTerrains = (state: RootState) => state?.[slice.name].data;
+export const { setTerrains, setTerrainError, hydrateTerrains } = slice.actions;
+export const selectTerrains = (state: RootState) => state.terrains.data;
 export const selectTerrainErrors = (state: RootState): string[] | null =>
-  state?.[slice.name].errors;
+  state.terrains.errors;
 
 export default slice;

@@ -4,7 +4,7 @@ import clientApi from '../clientApi';
 const UserTerrainsApi = clientApi.injectEndpoints({
   endpoints: (build: EndpointBuilder<any, any, any>) => ({
     getUserTerrains: build.query({
-      query: () => `/user-terrain`,
+      query: () => `/user-terrains`,
       providesTags: ['UserTerrainsApi'],
     }),
   }),
