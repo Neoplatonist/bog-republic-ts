@@ -1,5 +1,6 @@
 import React from 'react';
 import { fetchCurrentUser } from '@/libs/fetchCurrentUser';
+import Header from '@/components/base/Header';
 import DashboardWrapper from './wrapper';
 
 export default async function DashboardLayout({
@@ -11,13 +12,15 @@ export default async function DashboardLayout({
 
   return (
     <DashboardWrapper user={user}>
-      <div>GameHeader</div>
+      <div className="flex flex-col min-h-screen">
+        <Header />
 
-      <div style={{ flex: '1' }}>{children}</div>
+        <div style={{ flex: '1' }}>{children}</div>
 
-      <footer>
-        <p>MycoMushroom Footer</p>
-      </footer>
+        <footer>
+          <p>MycoMushroom Footer</p>
+        </footer>
+      </div>
     </DashboardWrapper>
   );
 }

@@ -91,7 +91,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-between p-24">
+    <div className="p-24">
       <div>User id: {user.id}</div>
       <div>User email: {user.email}</div>
       <div>User Name: {user.username}</div>

@@ -2,7 +2,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '@/libs/redux';
 import { z } from 'zod';
-import { Mycelium, UserTerrainsObjectSchema } from '@/libs/types';
+import { Mycelium, UserTerrainsObjectListSchema } from '@/libs/types';
 import { AddMycelium, SubtractMycelium } from '@/libs/myceliumMath';
 import UserTerrainsApi from './api';
 
@@ -11,7 +11,7 @@ const FETCH_USERTERRAINS_FAILED = 'Error fetching userApi data';
 
 // Schemas
 const UserTerrainsStateSchema = z.object({
-  data: UserTerrainsObjectSchema,
+  data: UserTerrainsObjectListSchema,
   errors: z.array(z.string()).nullable(),
 });
 
@@ -30,26 +30,40 @@ const slice = createSlice({
   reducers: {
     hydrateUserTerrains: (
       state,
-      { payload }: PayloadAction<UserTerrainsState>
+      { payload }: PayloadAction<Partial<UserTerrainsState>>
     ) => {
+      // First check if payload exists and has data
       if (payload?.data) {
-        const userTerrainsData = UserTerrainsObjectSchema.safeParse(
-          payload.data
-        );
+        try {
+          const processedData = Array.isArray(payload.data)
+            ? payload.data.map((terrain) => ({
+                ...terrain,
+                isContributionLocked: false,
+              }))
+            : payload.data;
 
-        if (userTerrainsData.success) {
-          state.data = userTerrainsData.data;
+          console.log({ processedData });
+
+          const parsedData = UserTerrainsObjectListSchema.parse(processedData);
+
+          state.data = parsedData;
           state.errors = null;
-        } else {
-          state.errors = [
-            'Hydrate User failed',
-            ...userTerrainsData.error.issues.map(
-              (issue) => `${issue.path[0]}: ${issue.message}`
-            ),
-          ];
+        } catch (error) {
+          if (error instanceof z.ZodError) {
+            // Provide more detailed error messages
+            state.errors = [
+              'Hydrate User Terrains failed: Data validation error',
+              ...error.errors.map(
+                (err) => `${err.path.join('.')}: ${err.message}`
+              ),
+            ];
+          } else {
+            state.errors = ['Hydrate User Terrains failed: Unknown error'];
+          }
         }
       }
 
+      // Handle errors if present in the payload
       if (payload?.errors) {
         state.errors = payload.errors;
       }
@@ -61,33 +75,33 @@ const slice = createSlice({
       // Handle successful user fetch
       .addMatcher(
         UserTerrainsApi.endpoints.getUserTerrains.matchFulfilled,
-        (
-          state,
-          action: PayloadAction<
-            NonNullable<
-              ReturnType<
-                typeof UserTerrainsApi.endpoints.getUserTerrains.select
-              >
-            >
-          >
-        ) => {
-          const userTerrains = UserTerrainsObjectSchema.safeParse(
-            action.payload
-          );
+        (state, action) => {
+          try {
+            // Use parse with a try-catch for better error reporting
+            const parsedData = UserTerrainsObjectListSchema.parse(
+              action.payload
+            );
 
-          if (!userTerrains.success) {
-            state.errors = [
-              FETCH_USERTERRAINS_FAILED,
-              'UserAPI -> getUser typecheck failed',
-              ...userTerrains.error.issues.map(
-                (issue) => `${issue.path[0]}: ${issue.message}`
-              ),
-            ];
-            return;
+            // Merge the new data with existing data
+            state.data = { ...state.data, ...parsedData };
+            state.errors = null;
+          } catch (error) {
+            if (error instanceof z.ZodError) {
+              // Provide more detailed error messages
+              state.errors = [
+                FETCH_USERTERRAINS_FAILED,
+                'Data validation error',
+                ...error.errors.map(
+                  (err) => `${err.path.join('.')}: ${err.message}`
+                ),
+              ];
+            } else {
+              state.errors = [
+                FETCH_USERTERRAINS_FAILED,
+                'Unknown error processing data',
+              ];
+            }
           }
-
-          state.data = { ...state.data, ...userTerrains.data };
-          state.errors = null;
         }
       )
 
@@ -97,7 +111,7 @@ const slice = createSlice({
         (state) => {
           state.errors = [
             FETCH_USERTERRAINS_FAILED,
-            'UserAPI -> getUser rejected',
+            'UserAPI -> getUserTerrains rejected',
           ];
         }
       );
