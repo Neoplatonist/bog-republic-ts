@@ -8,7 +8,7 @@ const baseQuery = fetchBaseQuery({
     // Get the token from local storage
     if (typeof window !== 'undefined') {
       const hankoUser = localStorage.getItem('hankoUser');
-      const token = hankoUser ? JSON.parse(hankoUser).jwt : null;
+      const token: string = hankoUser ? JSON.parse(hankoUser).jwt : null;
       if (token) headers.set('authorization', `Bearer ${token}`);
     }
 

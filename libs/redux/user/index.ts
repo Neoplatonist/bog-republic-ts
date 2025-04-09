@@ -117,7 +117,8 @@ const slice = createSlice({
 });
 
 // Exports
-export const { AddToMycelium, SubtractFromMycelium } = slice.actions;
+export const { AddToMycelium, SubtractFromMycelium, hydrateUser } =
+  slice.actions;
 export const userReducer = slice.reducer;
 
 // Selectors

@@ -4,12 +4,12 @@ import clientApi from '../clientApi';
 const UserApi = clientApi.injectEndpoints({
   endpoints: (build: EndpointBuilder<any, any, any>) => ({
     getUser: build.query({
-      query: () => '/user',
+      query: () => '/users',
       providesTags: ['UserApi'],
     }),
     userLogin: build.mutation({
       query: () => ({
-        url: `/user/login`,
+        url: `/users/login`,
         method: 'POST',
       }),
       invalidatesTags: ['UserApi'],
