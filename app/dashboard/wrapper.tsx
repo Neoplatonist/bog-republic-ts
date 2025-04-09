@@ -5,7 +5,7 @@ import type User from '@/libs/contexts/userType';
 import ReduxProvider from '@/libs/contexts/ReduxProvider';
 import UserProvider from '@/libs/contexts/UserProvider';
 
-export default function ClientWrapper({
+export default function DashboardWrapper({
   user,
   children,
 }: {
